@@ -11,70 +11,60 @@
 :root{
 --bg:#0f172a;--fg:#e5e7eb;--card:#020617;--accent:#2563eb;
 }
-.light{
---bg:#f8fafc;--fg:#020617;--card:#e5e7eb;
-}
-*{box-sizing:border-box}
+.light{--bg:#f8fafc;--fg:#020617;--card:#e5e7eb;}
 body{
 margin:0;font-family:Arial,sans-serif;
-background:var(--bg);color:var(--fg);
-font-size:18px;
+background:var(--bg);color:var(--fg);font-size:18px;
 }
 header,footer{
-background:var(--card);
-padding:10px 16px;
-display:flex;align-items:center;justify-content:space-between;
+background:var(--card);padding:10px 16px;
+display:flex;justify-content:space-between;align-items:center;
 }
-#container{
-display:flex;height:calc(100vh - 100px);
-}
+#container{display:flex;height:calc(100vh - 100px);}
 #playlist{
-width:360px;overflow-y:auto;
+width:360px;overflow-y:auto;border-right:1px solid #222;
 }
 .category{
 padding:10px;font-weight:bold;
-background:rgba(0,0,0,.2);
+background:rgba(255,255,255,.05);
 }
 .channel{
-display:flex;align-items:center;
-gap:10px;padding:10px;cursor:pointer;
+display:flex;align-items:center;gap:10px;
+padding:10px;cursor:pointer;
 }
-.channel img{
-width:48px;height:48px;background:#fff;border-radius:6px;
-}
+.channel img{width:48px;height:48px;background:#fff;border-radius:6px;}
 .channel:focus{
 outline:3px solid var(--accent);
 background:rgba(37,99,235,.2);
-transform:scale(1.03);
 }
+#player{flex:1;position:relative;}
+video{width:100%;height:100%;background:black;}
+#epg{
+position:absolute;bottom:0;left:0;right:0;
+background:rgba(0,0,0,.6);padding:10px;
+}
+#zapOverlay{
+position:absolute;bottom:120px;left:30px;
+background:rgba(0,0,0,.75);padding:16px;
+border-radius:12px;display:none;gap:14px;
+}
+#zapOverlay.show{display:flex;}
+#zapOverlay img{width:64px;height:64px;background:#fff;border-radius:8px;}
 button{
 background:var(--accent);color:#fff;
-border:none;border-radius:6px;
-padding:8px 12px;font-size:16px;
-}
-button:focus{outline:3px solid #fff}
-#player{
-flex:1;display:flex;flex-direction:column;
-}
-video{
-flex:1;width:100%;background:black;
-}
-#epg{
-padding:10px;font-size:16px;background:var(--card);
+border:none;border-radius:6px;padding:8px 12px;
 }
 .modal{
-display:none;position:fixed;inset:0;
-background:rgba(0,0,0,.6);
+display:none;position:absolute;inset:0;
+background:rgba(0,0,0,.7);
 justify-content:center;align-items:center;
+z-index:999;
 }
 .modal-content{
-background:var(--card);padding:20px;
-border-radius:10px;width:380px;
+background:var(--card);padding:20px;border-radius:10px;
+width:420px;text-align:center;
 }
-input{
-width:100%;padding:10px;margin-top:10px;
-font-size:16px;
-}
+.modal-content button{margin:10px;}
 </style>
 </head>
 
@@ -93,6 +83,14 @@ font-size:16px;
 <div id="playlist"></div>
 <div id="player">
 <video id="video" controls autoplay></video>
+<div id="zapOverlay">
+<img id="zapLogo">
+<div>
+<b id="zapName"></b><br>
+<span id="zapGroup"></span><br>
+<span id="zapEpg"></span>
+</div>
+</div>
 <div id="epg">EPG: -</div>
 </div>
 </div>
@@ -101,14 +99,23 @@ font-size:16px;
 Creativityright by M. Thorik - Donasi DANA 087888879016
 </footer>
 
+<!-- ERROR MODAL -->
+<div class="modal" id="errorBox">
+<div class="modal-content">
+<h3>⚠️ Gagal Memuat Channel</h3>
+<p id="errorMsg"></p>
+<button onclick="zapNext()">Lanjut Channel</button>
+<button onclick="closeError()">Kembali</button>
+</div>
+</div>
+
 <!-- SETTINGS -->
 <div class="modal" id="settings">
 <div class="modal-content">
 <h3>Settings</h3>
-<input id="m3u" placeholder="URL M3U">
-<input id="xmltv" placeholder="URL XMLTV (EPG)">
-<input id="newPin" placeholder="PIN Baru">
-<button onclick="saveSettings()" style="width:100%;margin-top:10px">Simpan</button>
+<input id="m3u" placeholder="URL M3U" style="width:100%;padding:10px">
+<input id="newPin" placeholder="PIN Baru" style="width:100%;padding:10px;margin-top:10px">
+<button onclick="saveSettings()">Simpan</button>
 </div>
 </div>
 
@@ -116,116 +123,137 @@ Creativityright by M. Thorik - Donasi DANA 087888879016
 <div class="modal" id="pin">
 <div class="modal-content">
 <h3>Masukkan PIN</h3>
-<input id="pinInput" type="password">
-<button onclick="checkPIN()" style="width:100%;margin-top:10px">Masuk</button>
+<input id="pinInput" type="password" style="width:100%;padding:10px">
+<button onclick="checkPIN()">Masuk</button>
 </div>
 </div>
 
 <script>
-/* CONFIG (localStorage – SMART TV SAFE) */
+/* ================= CONFIG ================= */
 let cfg=JSON.parse(localStorage.getItem('cfg'))||{
-pin:"1234",theme:"dark",m3u:"",xmltv:""
+pin:"1234",theme:"dark",m3u:""
 };
 document.body.className=cfg.theme==="light"?"light":"";
 
-/* PIN */
+/* ================= PIN ================= */
 function checkPIN(){
 if(pinInput.value===cfg.pin){
 pin.style.display='none';
 if(cfg.m3u)loadM3U(cfg.m3u);
-if(cfg.xmltv)loadEPG(cfg.xmltv);
 }else alert("PIN salah");
 }
 function logout(){pin.style.display='flex';}
 
-/* THEME */
+/* ================= THEME ================= */
 function toggleTheme(){
 document.body.classList.toggle('light');
 cfg.theme=document.body.classList.contains('light')?"light":"dark";
 saveCfg();
 }
 
-/* SETTINGS */
+/* ================= SETTINGS ================= */
 function openSettings(){settings.style.display='flex';}
 function saveSettings(){
 if(m3u.value)cfg.m3u=m3u.value;
-if(xmltv.value)cfg.xmltv=xmltv.value;
 if(newPin.value)cfg.pin=newPin.value;
 saveCfg();settings.style.display='none';
-loadM3U(cfg.m3u);loadEPG(cfg.xmltv);
+loadM3U(cfg.m3u);
 }
 function saveCfg(){localStorage.setItem('cfg',JSON.stringify(cfg));}
 
-/* M3U */
+/* ================= M3U PARSER (IMPROVED) ================= */
+let channels=[],groups={},currentIndex=-1;
+
 async function loadM3U(url){
-const t=await fetch(url).then(r=>r.text());
-parseM3U(t);
+const txt=await fetch(url).then(r=>r.text());
+parseM3U(txt);
 }
+
 function parseM3U(txt){
 playlist.innerHTML="";
-let lines=txt.split('\n'),cat={},cur={};
+channels=[];groups={};
+let lines=txt.split(/\r?\n/);
+let temp={};
+
 lines.forEach(l=>{
 if(l.startsWith("#EXTINF")){
-cur={
-name:l.split(',').pop(),
+temp={
+name:l.split(',').pop().trim(),
 group:(l.match(/group-title="([^"]+)"/)||[])[1]||"Lainnya",
-logo:(l.match(/tvg-logo="([^"]+)"/)||[])[1]||""
+logo:(l.match(/tvg-logo="([^"]+)"/)||[])[1]||"",
 };
 }else if(l.startsWith("http")){
-cur.url=l.trim();
-(cat[cur.group]=cat[cur.group]||[]).push({...cur});
+temp.url=l.trim();
+channels.push({...temp});
+(groups[temp.group]=groups[temp.group]||[]).push({...temp});
 }
 });
-for(let g in cat){
+
+let idx=0;
+for(let g in groups){
 playlist.innerHTML+=`<div class="category">${g}</div>`;
-cat[g].forEach(c=>{
+groups[g].forEach(ch=>{
+let i=idx++;
 let d=document.createElement('div');
 d.className="channel";d.tabIndex=0;
-d.innerHTML=`<img src="${c.logo}" onerror="this.src='https://via.placeholder.com/48'">${c.name}`;
-d.onclick=()=>play(c.url,c.name);
+d.innerHTML=`<img src="${ch.logo}" onerror="this.src='https://via.placeholder.com/48'">${ch.name}`;
+d.onclick=()=>zapTo(i);
 playlist.appendChild(d);
 });
 }
 }
 
-/* PLAYER */
+/* ================= PLAYER ================= */
 let hls;
-function play(url,name){
-epg.innerText="EPG: loading...";
+function zapTo(i){
+if(i<0||i>=channels.length)return;
+currentIndex=i;
+let ch=channels[i];
+playChannel(ch);
+showZap(ch,i);
+}
+
+function playChannel(ch){
+if(hls){hls.destroy();hls=null;}
 if(window.Hls&&Hls.isSupported()){
-if(hls)hls.destroy();
-hls=new Hls();hls.loadSource(url);hls.attachMedia(video);
-}else video.src=url;
-showEPG(name);
-}
-
-/* EPG */
-let epgData=[];
-async function loadEPG(url){
-const xml=await fetch(url).then(r=>r.text());
-const doc=new DOMParser().parseFromString(xml,"text/xml");
-epgData=[...doc.querySelectorAll("programme")];
-}
-function showEPG(ch){
-let now=new Date();
-let p=epgData.find(e=>{
-let s=parseEPG(e.getAttribute("start"));
-let en=parseEPG(e.getAttribute("stop"));
-return e.getAttribute("channel")?.includes(ch)&&now>=s&&now<=en;
+hls=new Hls();
+hls.loadSource(ch.url);
+hls.attachMedia(video);
+hls.on(Hls.Events.ERROR,(e,d)=>{
+if(d.fatal)showError("Gangguan jaringan / stream error");
 });
-epg.innerText=p?`EPG: ${p.querySelector("title").textContent}`:"EPG: Tidak tersedia";
+}else{
+video.src=ch.url;
 }
-function parseEPG(t){
-return new Date(t.substr(0,4),t.substr(4,2)-1,t.substr(6,2),t.substr(8,2),t.substr(10,2));
+video.play().catch(()=>showError("Tidak bisa memutar stream"));
+epg.innerText="EPG: "+ch.name;
+video.focus();
 }
 
-/* REMOTE DPAD SUPPORT */
+/* ================= ZAP OVERLAY ================= */
+let zapTimer;
+function showZap(ch,i){
+zapLogo.src=ch.logo||'https://via.placeholder.com/64';
+zapName.innerText=`${i+1}. ${ch.name}`;
+zapGroup.innerText=ch.group;
+zapEpg.innerText="Now Playing";
+zapOverlay.classList.add('show');
+clearTimeout(zapTimer);
+zapTimer=setTimeout(()=>zapOverlay.classList.remove('show'),3000);
+}
+
+/* ================= ERROR HANDLER ================= */
+function showError(msg){
+errorMsg.innerText=msg;
+errorBox.style.display='flex';
+}
+function closeError(){errorBox.style.display='none';}
+function zapNext(){closeError();zapTo(currentIndex+1);}
+
+/* ================= REMOTE ================= */
 document.addEventListener('keydown',e=>{
-const f=[...document.querySelectorAll('.channel,button,input')];
-let i=f.indexOf(document.activeElement);
-if(e.key==="ArrowDown")f[i+1]?.focus();
-if(e.key==="ArrowUp")f[i-1]?.focus();
-if(e.key==="ArrowRight")video.focus();
+if(e.key==="ArrowUp")zapTo(currentIndex-1);
+if(e.key==="ArrowDown")zapTo(currentIndex+1);
 if(e.key==="Backspace")logout();
 });
 
