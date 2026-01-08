@@ -2,70 +2,29 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<title>IPTV Smart TV</title>
+<title>IPTV Smart TV FINAL</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 
 <style>
-:root{
---bg:#0f172a;--fg:#e5e7eb;--card:#020617;--accent:#2563eb;
-}
-.light{--bg:#f8fafc;--fg:#020617;--card:#e5e7eb;}
-body{
-margin:0;font-family:Arial,sans-serif;
-background:var(--bg);color:var(--fg);font-size:18px;
-}
-header,footer{
-background:var(--card);padding:10px 16px;
-display:flex;justify-content:space-between;align-items:center;
-}
-#container{display:flex;height:calc(100vh - 100px);}
-#playlist{
-width:360px;overflow-y:auto;border-right:1px solid #222;
-}
-.category{
-padding:10px;font-weight:bold;
-background:rgba(255,255,255,.06);
-}
-.channel{
-display:flex;align-items:center;gap:10px;
-padding:10px;cursor:pointer;
-}
-.channel img{
-width:48px;height:48px;background:#fff;border-radius:6px;
-}
-.channel:focus{
-outline:3px solid var(--accent);
-background:rgba(37,99,235,.2);
-}
-#player{flex:1;position:relative;}
-video{width:100%;height:100%;background:black;}
-#zapOverlay{
-position:absolute;bottom:120px;left:30px;
-background:rgba(0,0,0,.75);padding:16px;
-border-radius:12px;display:none;gap:14px;
-}
-#zapOverlay.show{display:flex;}
-#zapOverlay img{width:64px;height:64px;background:#fff;border-radius:8px;}
-#epgBar{
-position:absolute;bottom:0;left:0;right:0;
-background:rgba(0,0,0,.6);padding:10px;
-}
-button{
-background:var(--accent);color:#fff;
-border:none;border-radius:6px;padding:8px 12px;
-}
-.modal{
-display:none;position:absolute;inset:0;
-background:rgba(0,0,0,.7);
-justify-content:center;align-items:center;z-index:999;
-}
-.modal-content{
-background:var(--card);padding:20px;border-radius:10px;
-width:420px;text-align:center;
-}
-.modal-content button{margin:10px;}
-input{width:100%;padding:10px;margin-top:10px;font-size:16px;}
+:root{--bg:#0f172a;--fg:#e5e7eb;--card:#020617;--accent:#2563eb}
+.light{--bg:#f8fafc;--fg:#020617;--card:#e5e7eb}
+body{margin:0;font-family:Arial;background:var(--bg);color:var(--fg)}
+header,footer{background:var(--card);padding:10px 16px;display:flex;justify-content:space-between}
+#container{display:flex;height:calc(100vh - 100px)}
+#playlist{width:360px;overflow-y:auto}
+.category{padding:8px;font-weight:bold;background:rgba(255,255,255,.08)}
+.channel{display:flex;gap:10px;align-items:center;padding:10px;cursor:pointer}
+.channel:focus{outline:3px solid var(--accent)}
+.channel img{width:48px;height:48px;border-radius:6px;background:#fff}
+#player{flex:1;position:relative}
+video{width:100%;height:100%;background:black}
+#zap{position:absolute;bottom:120px;left:30px;background:rgba(0,0,0,.75);padding:15px;border-radius:10px;display:none}
+#zap.show{display:flex;gap:15px}
+#zap img{width:64px;height:64px;background:#fff;border-radius:8px}
+#error{display:none;position:absolute;inset:0;background:rgba(0,0,0,.7);align-items:center;justify-content:center}
+#error .box{background:var(--card);padding:20px;border-radius:10px;text-align:center}
+button{background:var(--accent);color:#fff;border:none;border-radius:6px;padding:8px 12px}
 </style>
 </head>
 
@@ -74,9 +33,8 @@ input{width:100%;padding:10px;margin-top:10px;font-size:16px;}
 <header>
 <b>📺 IPTV SMART TV</b>
 <div>
-<button onclick="toggleTheme()">🌙/☀️</button>
+<button onclick="toggleTheme()">🌙</button>
 <button onclick="openSettings()">⚙️</button>
-<button onclick="logout()">🔐</button>
 </div>
 </header>
 
@@ -84,9 +42,9 @@ input{width:100%;padding:10px;margin-top:10px;font-size:16px;}
 <div id="playlist"></div>
 
 <div id="player">
-<video id="video" controls autoplay></video>
+<video id="video" playsinline muted></video>
 
-<div id="zapOverlay">
+<div id="zap">
 <img id="zapLogo">
 <div>
 <b id="zapName"></b><br>
@@ -94,7 +52,13 @@ input{width:100%;padding:10px;margin-top:10px;font-size:16px;}
 </div>
 </div>
 
-<div id="epgBar">Ready</div>
+<div id="error">
+<div class="box">
+<h3>⚠️ Stream Error</h3>
+<p id="errorMsg"></p>
+<button onclick="zapNext()">▶ Channel Berikutnya</button>
+</div>
+</div>
 </div>
 </div>
 
@@ -102,195 +66,134 @@ input{width:100%;padding:10px;margin-top:10px;font-size:16px;}
 Creativityright by M. Thorik - Donasi DANA 087888879016
 </footer>
 
-<!-- ERROR -->
-<div class="modal" id="errorBox">
-<div class="modal-content">
-<h3>⚠️ Gagal Memutar Channel</h3>
-<p id="errorMsg"></p>
-<button onclick="zapNext()">Lanjut Channel</button>
-<button onclick="closeError()">Kembali</button>
-</div>
-</div>
-
-<!-- SETTINGS -->
-<div class="modal" id="settings">
-<div class="modal-content">
-<h3>Settings</h3>
-<input id="m3u" placeholder="URL M3U">
-<input id="newPin" placeholder="PIN Baru">
-<button onclick="saveSettings()">Simpan</button>
-</div>
-</div>
-
-<!-- PIN -->
-<div class="modal" id="pin">
-<div class="modal-content">
-<h3>Masukkan PIN</h3>
-<input id="pinInput" type="password">
-<button onclick="checkPIN()">Masuk</button>
-</div>
-</div>
-
 <script>
 /* ================= CONFIG ================= */
-let cfg = JSON.parse(localStorage.getItem('cfg')) || {
-pin:"1234", theme:"dark", m3u:""
-};
-document.body.className = cfg.theme === "light" ? "light" : "";
+let cfg = JSON.parse(localStorage.getItem('cfg')) || { theme:'dark', m3u:'' };
+document.body.className = cfg.theme === 'light' ? 'light' : '';
 
-/* ================= PIN ================= */
-function checkPIN(){
-if(pinInput.value === cfg.pin){
-pin.style.display='none';
-if(cfg.m3u) loadM3U(cfg.m3u);
-}else alert("PIN salah");
-}
-function logout(){ pin.style.display='flex'; }
-
-/* ================= THEME ================= */
 function toggleTheme(){
 document.body.classList.toggle('light');
-cfg.theme = document.body.classList.contains('light') ? "light" : "dark";
-saveCfg();
+cfg.theme=document.body.classList.contains('light')?'light':'dark';
+localStorage.setItem('cfg',JSON.stringify(cfg));
 }
 
-/* ================= SETTINGS ================= */
-function openSettings(){ settings.style.display='flex'; }
-function saveSettings(){
-if(m3u.value) cfg.m3u = m3u.value;
-if(newPin.value) cfg.pin = newPin.value;
-saveCfg();
-settings.style.display='none';
-loadM3U(cfg.m3u);
-}
-function saveCfg(){ localStorage.setItem('cfg', JSON.stringify(cfg)); }
-
-/* ================= PARSER M3U (FINAL) ================= */
-let playlistState = { name:"", channels:[], groups:[] };
-let channels = [];
-let currentIndex = -1;
-
-function parseM3U(content, fileName="My Playlist"){
-const channels = [];
-const groupsSet = new Set();
-const lines = content.split(/\r?\n/);
-let current = null;
-
-lines.forEach(line=>{
-line = line.trim();
-if(line.startsWith("#EXTINF:")){
-const nameMatch = line.match(/,(.*)$/);
-const logoMatch = line.match(/tvg-logo="([^"]+)"/i);
-const groupMatch = line.match(/group-title="([^"]+)"/i);
-const tvgIdMatch = line.match(/tvg-id="([^"]+)"/i);
-
-current = {
-id: Math.random().toString(36).substr(2,9),
-name: nameMatch ? nameMatch[1].trim() : "Unknown Channel",
-logo: logoMatch ? logoMatch[1] : "",
-group: groupMatch ? groupMatch[1] : "Uncategorized",
-tvgId: tvgIdMatch ? tvgIdMatch[1] : "",
-url: ""
+/* ================= M3U PARSER ================= */
+let channels=[], groups=[];
+function parseM3U(txt){
+channels=[];groups=[];
+let cur=null;
+txt.split(/\r?\n/).forEach(l=>{
+l=l.trim();
+if(l.startsWith('#EXTINF')){
+const n=l.match(/,(.*)$/);
+const g=l.match(/group-title="([^"]+)"/i);
+const logo=l.match(/tvg-logo="([^"]+)"/i);
+cur={
+id:Math.random(),
+name:n?n[1]:'Unknown',
+group:g?g[1]:'Uncategorized',
+logo:logo?logo[1]:'',
+url:''
 };
-groupsSet.add(current.group);
+if(!groups.includes(cur.group)) groups.push(cur.group);
 }
-else if(current && /^(https?|rtmp|rtsp):\/\//i.test(line)){
-current.url = line;
-channels.push(current);
-current = null;
+else if(cur && l.match(/^(http|rtmp|rtsp)/i)){
+cur.url=l;
+channels.push(cur);
+cur=null;
 }
 });
-
-return {
-name: fileName,
-channels,
-groups: Array.from(groupsSet).sort()
-};
 }
 
-/* ================= LOAD & RENDER ================= */
+/* ================= LOAD ================= */
 async function loadM3U(url){
-const txt = await fetch(url).then(r=>r.text());
-playlistState = parseM3U(txt,"IPTV Playlist");
-channels = playlistState.channels;
-renderPlaylist();
+const txt=await fetch(url).then(r=>r.text());
+parseM3U(txt);
+render();
 }
 
-function renderPlaylist(){
-playlist.innerHTML="";
-playlistState.groups.forEach(group=>{
-const c = document.createElement("div");
-c.className="category";
-c.textContent=group;
-playlist.appendChild(c);
-
-channels.filter(ch=>ch.group===group).forEach(ch=>{
-const idx = channels.indexOf(ch);
-const d=document.createElement("div");
-d.className="channel"; d.tabIndex=0;
-d.innerHTML=`<img src="${ch.logo}" onerror="this.src='https://via.placeholder.com/48'">${ch.name}`;
-d.onclick=()=>zapTo(idx);
+/* ================= UI ================= */
+function render(){
+playlist.innerHTML='';
+groups.forEach(g=>{
+playlist.innerHTML+=`<div class="category">${g}</div>`;
+channels.filter(c=>c.group===g).forEach(c=>{
+const i=channels.indexOf(c);
+const d=document.createElement('div');
+d.className='channel';d.tabIndex=0;
+d.innerHTML=`<img src="${c.logo}" onerror="this.src='https://via.placeholder.com/48'">${c.name}`;
+d.onclick=()=>playIndex(i);
 playlist.appendChild(d);
 });
 });
 }
 
-/* ================= PLAYER ================= */
-let hls;
-function zapTo(i){
-if(i<0 || i>=channels.length) return;
-currentIndex=i;
-const ch = channels[i];
-playChannel(ch);
-showZap(ch,i);
+/* ================= PLAYER FIX ================= */
+let hls=null,current=-1;
+function playIndex(i){
+if(i<0||i>=channels.length) return;
+current=i;
+playChannel(channels[i]);
+showZap(channels[i],i);
 }
 
 function playChannel(ch){
-if(hls){ hls.destroy(); hls=null; }
-epgBar.innerText = ch.name;
+const v=video;
+v.pause();
+v.src='';
+v.muted=true;
 
-if(window.Hls && Hls.isSupported()){
-hls=new Hls();
+if(hls){hls.destroy();hls=null;}
+
+const isHls = ch.url.includes('.m3u8');
+
+if(isHls && window.Hls && Hls.isSupported()){
+hls=new Hls({lowLatencyMode:true});
+hls.attachMedia(v);
+hls.on(Hls.Events.MEDIA_ATTACHED,()=>{
 hls.loadSource(ch.url);
-hls.attachMedia(video);
+});
 hls.on(Hls.Events.ERROR,(e,d)=>{
-if(d.fatal) showError("Gangguan jaringan / stream error");
+if(d.fatal) showError("HLS Error / Jaringan");
 });
 }else{
-video.src = ch.url;
-}
-video.play().catch(()=>showError("Tidak bisa memutar stream"));
-video.focus();
+v.src=ch.url;
 }
 
-/* ================= ZAP OVERLAY ================= */
-let zapTimer;
-function showZap(ch,i){
-zapLogo.src = ch.logo || "https://via.placeholder.com/64";
-zapName.innerText = (i+1)+". "+ch.name;
-zapGroup.innerText = ch.group;
-zapOverlay.classList.add("show");
-clearTimeout(zapTimer);
-zapTimer = setTimeout(()=>zapOverlay.classList.remove("show"),3000);
+v.onerror=()=>showError("Tidak bisa memutar stream");
+v.onstalled=()=>showError("Stream terhenti");
+v.onwaiting=()=>console.log("Buffering");
+
+v.play().catch(()=>showError("Autoplay diblokir"));
+}
+
+/* ================= ZAP ================= */
+function showZap(c,i){
+zapLogo.src=c.logo||'https://via.placeholder.com/64';
+zapName.innerText=(i+1)+'. '+c.name;
+zapGroup.innerText=c.group;
+zap.classList.add('show');
+setTimeout(()=>zap.classList.remove('show'),2500);
 }
 
 /* ================= ERROR ================= */
 function showError(msg){
-errorMsg.innerText = msg;
-errorBox.style.display='flex';
+errorMsg.innerText=msg;
+error.style.display='flex';
 }
-function closeError(){ errorBox.style.display='none'; }
-function zapNext(){ closeError(); zapTo(currentIndex+1); }
+function zapNext(){
+error.style.display='none';
+playIndex(current+1);
+}
 
 /* ================= REMOTE ================= */
-document.addEventListener("keydown",e=>{
-if(e.key==="ArrowUp") zapTo(currentIndex-1);
-if(e.key==="ArrowDown") zapTo(currentIndex+1);
-if(e.key==="Backspace") logout();
+document.addEventListener('keydown',e=>{
+if(e.key==='ArrowUp') playIndex(current-1);
+if(e.key==='ArrowDown') playIndex(current+1);
 });
 
-/* INIT */
-pin.style.display='flex';
+/* AUTO LOAD */
+if(cfg.m3u) loadM3U(cfg.m3u);
 </script>
 
 </body>
