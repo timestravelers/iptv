@@ -2,106 +2,78 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<title>IPTV Player Ultimate</title>
+<title>IPTV Smart TV</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 
 <style>
-:root {
-    --bg: #0f172a;
-    --fg: #e5e7eb;
-    --card: #020617;
-    --accent: #2563eb;
+:root{
+--bg:#0f172a;--fg:#e5e7eb;--card:#020617;--accent:#2563eb;
 }
-.light {
-    --bg: #f8fafc;
-    --fg: #020617;
-    --card: #e5e7eb;
-    --accent: #2563eb;
+.light{
+--bg:#f8fafc;--fg:#020617;--card:#e5e7eb;
 }
-body {
-    margin: 0;
-    font-family: Arial, sans-serif;
-    background: var(--bg);
-    color: var(--fg);
+*{box-sizing:border-box}
+body{
+margin:0;font-family:Arial,sans-serif;
+background:var(--bg);color:var(--fg);
+font-size:18px;
 }
-header {
-    display: flex;
-    justify-content: space-between;
-    padding: 10px;
-    background: var(--card);
+header,footer{
+background:var(--card);
+padding:10px 16px;
+display:flex;align-items:center;justify-content:space-between;
 }
-button {
-    background: var(--accent);
-    border: none;
-    color: white;
-    padding: 6px 10px;
-    border-radius: 5px;
+#container{
+display:flex;height:calc(100vh - 100px);
 }
-#container {
-    display: flex;
-    height: calc(100vh - 90px);
+#playlist{
+width:360px;overflow-y:auto;
 }
-#playlist {
-    width: 300px;
-    overflow-y: auto;
+.category{
+padding:10px;font-weight:bold;
+background:rgba(0,0,0,.2);
 }
-.category {
-    padding: 6px;
-    background: var(--card);
-    font-weight: bold;
+.channel{
+display:flex;align-items:center;
+gap:10px;padding:10px;cursor:pointer;
 }
-.channel {
-    display: flex;
-    gap: 8px;
-    padding: 6px;
-    cursor: pointer;
+.channel img{
+width:48px;height:48px;background:#fff;border-radius:6px;
 }
-.channel:hover { background: rgba(0,0,0,0.1); }
-.channel img {
-    width: 32px;
-    height: 32px;
+.channel:focus{
+outline:3px solid var(--accent);
+background:rgba(37,99,235,.2);
+transform:scale(1.03);
 }
-#player {
-    flex: 1;
+button{
+background:var(--accent);color:#fff;
+border:none;border-radius:6px;
+padding:8px 12px;font-size:16px;
 }
-video {
-    width: 100%;
-    height: 100%;
-    background: black;
+button:focus{outline:3px solid #fff}
+#player{
+flex:1;display:flex;flex-direction:column;
 }
-#epg {
-    padding: 6px;
-    font-size: 13px;
-    background: var(--card);
+video{
+flex:1;width:100%;background:black;
 }
-footer {
-    text-align: center;
-    font-size: 12px;
-    background: var(--card);
-    padding: 6px;
+#epg{
+padding:10px;font-size:16px;background:var(--card);
 }
-
-/* Modal */
-.modal {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,.6);
-    justify-content: center;
-    align-items: center;
+.modal{
+display:none;position:fixed;inset:0;
+background:rgba(0,0,0,.6);
+justify-content:center;align-items:center;
 }
-.modal-content {
-    background: var(--card);
-    padding: 15px;
-    border-radius: 8px;
-    width: 320px;
+.modal-content{
+background:var(--card);padding:20px;
+border-radius:10px;width:380px;
 }
-input {
-    width: 100%;
-    margin-top: 8px;
-    padding: 6px;
+input{
+width:100%;padding:10px;margin-top:10px;
+font-size:16px;
 }
 </style>
 </head>
@@ -109,20 +81,20 @@ input {
 <body>
 
 <header>
-    <b>📺 IPTV Ultimate</b>
-    <div>
-        <button onclick="toggleTheme()">🌙/☀️</button>
-        <button onclick="openSettings()">⚙️</button>
-        <button onclick="logout()">🔐</button>
-    </div>
+<b>📺 IPTV SMART TV</b>
+<div>
+<button onclick="toggleTheme()">🌙/☀️</button>
+<button onclick="openSettings()">⚙️</button>
+<button onclick="logout()">🔐</button>
+</div>
 </header>
 
 <div id="container">
-    <div id="playlist"></div>
-    <div id="player">
-        <video id="video" controls autoplay></video>
-        <div id="epg">EPG: -</div>
-    </div>
+<div id="playlist"></div>
+<div id="player">
+<video id="video" controls autoplay></video>
+<div id="epg">EPG: -</div>
+</div>
 </div>
 
 <footer>
@@ -136,7 +108,7 @@ Creativityright by M. Thorik - Donasi DANA 087888879016
 <input id="m3u" placeholder="URL M3U">
 <input id="xmltv" placeholder="URL XMLTV (EPG)">
 <input id="newPin" placeholder="PIN Baru">
-<button onclick="saveSettings()" style="width:100%;margin-top:8px">Simpan</button>
+<button onclick="saveSettings()" style="width:100%;margin-top:10px">Simpan</button>
 </div>
 </div>
 
@@ -145,117 +117,117 @@ Creativityright by M. Thorik - Donasi DANA 087888879016
 <div class="modal-content">
 <h3>Masukkan PIN</h3>
 <input id="pinInput" type="password">
-<button onclick="checkPIN()" style="width:100%;margin-top:8px">Masuk</button>
+<button onclick="checkPIN()" style="width:100%;margin-top:10px">Masuk</button>
 </div>
 </div>
 
 <script>
-/* CONFIG */
-let cfg = JSON.parse(localStorage.getItem('cfg')) || {
-    pin: "1234",
-    theme: "dark",
-    m3u: "",
-    xmltv: ""
+/* CONFIG (localStorage – SMART TV SAFE) */
+let cfg=JSON.parse(localStorage.getItem('cfg'))||{
+pin:"1234",theme:"dark",m3u:"",xmltv:""
 };
-document.body.className = cfg.theme === "light" ? "light" : "";
+document.body.className=cfg.theme==="light"?"light":"";
 
 /* PIN */
 function checkPIN(){
-    if(pinInput.value === cfg.pin){
-        pin.style.display='none';
-        if(cfg.m3u) loadM3U(cfg.m3u);
-        if(cfg.xmltv) loadEPG(cfg.xmltv);
-    } else alert("PIN salah");
+if(pinInput.value===cfg.pin){
+pin.style.display='none';
+if(cfg.m3u)loadM3U(cfg.m3u);
+if(cfg.xmltv)loadEPG(cfg.xmltv);
+}else alert("PIN salah");
 }
-function logout(){ pin.style.display='flex'; }
+function logout(){pin.style.display='flex';}
 
 /* THEME */
 function toggleTheme(){
-    document.body.classList.toggle('light');
-    cfg.theme = document.body.classList.contains('light') ? "light" : "dark";
-    saveCfg();
+document.body.classList.toggle('light');
+cfg.theme=document.body.classList.contains('light')?"light":"dark";
+saveCfg();
 }
 
 /* SETTINGS */
-function openSettings(){ settings.style.display='flex'; }
+function openSettings(){settings.style.display='flex';}
 function saveSettings(){
-    if(m3u.value) cfg.m3u = m3u.value;
-    if(xmltv.value) cfg.xmltv = xmltv.value;
-    if(newPin.value) cfg.pin = newPin.value;
-    saveCfg();
-    settings.style.display='none';
-    loadM3U(cfg.m3u);
-    loadEPG(cfg.xmltv);
+if(m3u.value)cfg.m3u=m3u.value;
+if(xmltv.value)cfg.xmltv=xmltv.value;
+if(newPin.value)cfg.pin=newPin.value;
+saveCfg();settings.style.display='none';
+loadM3U(cfg.m3u);loadEPG(cfg.xmltv);
 }
-function saveCfg(){
-    localStorage.setItem('cfg', JSON.stringify(cfg));
-}
+function saveCfg(){localStorage.setItem('cfg',JSON.stringify(cfg));}
 
 /* M3U */
 async function loadM3U(url){
-    const t = await fetch(url).then(r=>r.text());
-    parseM3U(t);
+const t=await fetch(url).then(r=>r.text());
+parseM3U(t);
 }
 function parseM3U(txt){
-    playlist.innerHTML="";
-    let lines=txt.split('\n'), cat={}, cur={};
-    lines.forEach(l=>{
-        if(l.startsWith("#EXTINF")){
-            cur={
-                name:l.split(',').pop(),
-                group:(l.match(/group-title="([^"]+)"/)||[])[1]||"Lainnya",
-                logo:(l.match(/tvg-logo="([^"]+)"/)||[])[1]||""
-            };
-        } else if(l.startsWith("http")){
-            cur.url=l.trim();
-            cat[cur.group]=cat[cur.group]||[];
-            cat[cur.group].push({...cur});
-        }
-    });
-    for(let g in cat){
-        playlist.innerHTML+=`<div class="category">${g}</div>`;
-        cat[g].forEach(c=>{
-            let d=document.createElement('div');
-            d.className="channel";
-            d.innerHTML=`<img src="${c.logo}" onerror="this.src='https://via.placeholder.com/32'">${c.name}`;
-            d.onclick=()=>play(c.url,c.name);
-            playlist.appendChild(d);
-        });
-    }
+playlist.innerHTML="";
+let lines=txt.split('\n'),cat={},cur={};
+lines.forEach(l=>{
+if(l.startsWith("#EXTINF")){
+cur={
+name:l.split(',').pop(),
+group:(l.match(/group-title="([^"]+)"/)||[])[1]||"Lainnya",
+logo:(l.match(/tvg-logo="([^"]+)"/)||[])[1]||""
+};
+}else if(l.startsWith("http")){
+cur.url=l.trim();
+(cat[cur.group]=cat[cur.group]||[]).push({...cur});
+}
+});
+for(let g in cat){
+playlist.innerHTML+=`<div class="category">${g}</div>`;
+cat[g].forEach(c=>{
+let d=document.createElement('div');
+d.className="channel";d.tabIndex=0;
+d.innerHTML=`<img src="${c.logo}" onerror="this.src='https://via.placeholder.com/48'">${c.name}`;
+d.onclick=()=>play(c.url,c.name);
+playlist.appendChild(d);
+});
+}
 }
 
 /* PLAYER */
 let hls;
 function play(url,name){
-    epg.innerText="EPG: loading...";
-    if(Hls.isSupported()){
-        if(hls)hls.destroy();
-        hls=new Hls();
-        hls.loadSource(url);
-        hls.attachMedia(video);
-    } else video.src=url;
-    showEPG(name);
+epg.innerText="EPG: loading...";
+if(window.Hls&&Hls.isSupported()){
+if(hls)hls.destroy();
+hls=new Hls();hls.loadSource(url);hls.attachMedia(video);
+}else video.src=url;
+showEPG(name);
 }
 
 /* EPG */
 let epgData=[];
 async function loadEPG(url){
-    const xml=await fetch(url).then(r=>r.text());
-    const doc=new DOMParser().parseFromString(xml,"text/xml");
-    epgData=[...doc.querySelectorAll("programme")];
+const xml=await fetch(url).then(r=>r.text());
+const doc=new DOMParser().parseFromString(xml,"text/xml");
+epgData=[...doc.querySelectorAll("programme")];
 }
 function showEPG(ch){
-    let now=new Date();
-    let p=epgData.find(e=>{
-        let s=parseEPG(e.getAttribute("start"));
-        let en=parseEPG(e.getAttribute("stop"));
-        return e.getAttribute("channel")?.includes(ch)&&now>=s&&now<=en;
-    });
-    epg.innerText=p?`EPG: ${p.querySelector("title").textContent}`:"EPG: Tidak tersedia";
+let now=new Date();
+let p=epgData.find(e=>{
+let s=parseEPG(e.getAttribute("start"));
+let en=parseEPG(e.getAttribute("stop"));
+return e.getAttribute("channel")?.includes(ch)&&now>=s&&now<=en;
+});
+epg.innerText=p?`EPG: ${p.querySelector("title").textContent}`:"EPG: Tidak tersedia";
 }
 function parseEPG(t){
-    return new Date(t.substr(0,4),t.substr(4,2)-1,t.substr(6,2),t.substr(8,2),t.substr(10,2));
+return new Date(t.substr(0,4),t.substr(4,2)-1,t.substr(6,2),t.substr(8,2),t.substr(10,2));
 }
+
+/* REMOTE DPAD SUPPORT */
+document.addEventListener('keydown',e=>{
+const f=[...document.querySelectorAll('.channel,button,input')];
+let i=f.indexOf(document.activeElement);
+if(e.key==="ArrowDown")f[i+1]?.focus();
+if(e.key==="ArrowUp")f[i-1]?.focus();
+if(e.key==="ArrowRight")video.focus();
+if(e.key==="Backspace")logout();
+});
 
 /* INIT */
 pin.style.display='flex';
