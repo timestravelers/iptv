@@ -1,785 +1,265 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>IQ-TV | Dynamic M3U Loader</title>
-  <link href="https://vjs.zencdn.net/8.16.1/video-js.css" rel="stylesheet" />
-  <style>
-    :root {
-      --bg: #0f0f12;
-      --sidebar-bg: #121215;
-      --text: #ffffff;
-      --accent: #4a90e2;
-      --hover: #2a2a30;
-      --border: #333;
-      --card-bg: #1a1a1f;
-      --highlight: #ffcc00;
-      --transition: all 0.2s ease;
-    }
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    }
-    body {
-      background: var(--bg);
-      color: var(--text);
-      display: flex;
-      height: 100vh;
-      overflow: hidden;
-      transition: var(--transition);
-    }
+<meta charset="UTF-8">
+<title>IPTV Player Ultimate</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    /* SIDEBAR */
-    .sidebar {
-      width: 240px;
-      background: var(--sidebar-bg);
-      padding: 20px 0;
-      overflow-y: auto;
-      border-right: 1px solid var(--border);
-      transition: var(--transition);
-      display: flex;
-      flex-direction: column;
-      z-index: 10;
-    }
-    @media (max-width: 768px) {
-      .sidebar {
-        width: 60px;
-        padding: 10px 0;
-      }
-    }
+<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 
-    .logo {
-      padding: 20px 20px 20px 30px;
-      font-size: 1.5rem;
-      font-weight: bold;
-      color: var(--accent);
-      border-bottom: 1px solid var(--border);
-      margin-bottom: 20px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      transition: var(--transition);
-    }
-    @media (max-width: 768px) {
-      .logo {
-        font-size: 1rem;
-        padding: 10px 10px;
-        text-align: center;
-      }
-    }
+<style>
+:root {
+    --bg: #0f172a;
+    --fg: #e5e7eb;
+    --card: #020617;
+    --accent: #2563eb;
+}
+.light {
+    --bg: #f8fafc;
+    --fg: #020617;
+    --card: #e5e7eb;
+    --accent: #2563eb;
+}
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: var(--bg);
+    color: var(--fg);
+}
+header {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px;
+    background: var(--card);
+}
+button {
+    background: var(--accent);
+    border: none;
+    color: white;
+    padding: 6px 10px;
+    border-radius: 5px;
+}
+#container {
+    display: flex;
+    height: calc(100vh - 90px);
+}
+#playlist {
+    width: 300px;
+    overflow-y: auto;
+}
+.category {
+    padding: 6px;
+    background: var(--card);
+    font-weight: bold;
+}
+.channel {
+    display: flex;
+    gap: 8px;
+    padding: 6px;
+    cursor: pointer;
+}
+.channel:hover { background: rgba(0,0,0,0.1); }
+.channel img {
+    width: 32px;
+    height: 32px;
+}
+#player {
+    flex: 1;
+}
+video {
+    width: 100%;
+    height: 100%;
+    background: black;
+}
+#epg {
+    padding: 6px;
+    font-size: 13px;
+    background: var(--card);
+}
+footer {
+    text-align: center;
+    font-size: 12px;
+    background: var(--card);
+    padding: 6px;
+}
 
-    .m3u-input-box {
-      padding: 15px;
-      background: var(--card-bg);
-      margin: 15px 20px;
-      border-radius: 8px;
-      border: 1px solid var(--border);
-      transition: var(--transition);
-    }
-    @media (max-width: 768px) {
-      .m3u-input-box {
-        margin: 10px;
-      }
-    }
-
-    .m3u-input-box input {
-      width: 100%;
-      padding: 10px;
-      background: var(--hover);
-      border: none;
-      border-radius: 6px;
-      color: var(--text);
-      font-size: 0.9rem;
-      transition: var(--transition);
-    }
-
-    .m3u-input-box button {
-      width: 100%;
-      margin-top: 10px;
-      padding: 10px;
-      background: var(--accent);
-      border: none;
-      border-radius: 6px;
-      color: #000;
-      font-weight: bold;
-      cursor: pointer;
-      transition: var(--transition);
-    }
-    .m3u-input-box button:hover {
-      background: #3a7bd5;
-    }
-
-    .category-list {
-      padding: 0 10px;
-      overflow-y: auto;
-      flex: 1;
-    }
-
-    .menu-item {
-      padding: 12px 20px 12px 30px;
-      cursor: pointer;
-      transition: var(--transition);
-      border-left: 4px solid transparent;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    @media (max-width: 768px) {
-      .menu-item {
-        padding: 10px 15px;
-        font-size: 0.9rem;
-      }
-    }
-
-    .menu-item:hover, .menu-item.active {
-      background: var(--hover);
-      border-left-color: var(--accent);
-    }
-
-    .search-box {
-      margin: 15px 20px;
-      padding: 10px;
-      background: var(--card-bg);
-      border-radius: 6px;
-      border: 1px solid var(--border);
-      transition: var(--transition);
-    }
-    @media (max-width: 768px) {
-      .search-box {
-        margin: 10px;
-      }
-    }
-
-    .search-box input {
-      width: 100%;
-      padding: 8px;
-      background: transparent;
-      border: none;
-      color: var(--text);
-      font-size: 0.9rem;
-      transition: var(--transition);
-    }
-
-    .clear-btn {
-      padding: 8px 15px;
-      background: var(--hover);
-      border-radius: 6px;
-      cursor: pointer;
-      margin: 15px 20px;
-      text-align: center;
-      transition: var(--transition);
-    }
-    @media (max-width: 768px) {
-      .clear-btn {
-        margin: 10px;
-        font-size: 0.9rem;
-      }
-    }
-    .clear-btn:hover {
-      background: #333;
-    }
-
-    /* MAIN CONTENT */
-    .main-content {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      padding: 20px;
-      overflow: hidden;
-      transition: var(--transition);
-    }
-    @media (max-width: 768px) {
-      .main-content {
-        padding: 10px;
-      }
-    }
-
-    .header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 20px;
-      flex-wrap: wrap;
-      gap: 15px;
-    }
-    @media (max-width: 768px) {
-      .header {
-        flex-direction: column;
-        align-items: stretch;
-      }
-    }
-
-    .header h1 {
-      font-size: 1.5rem;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      transition: var(--transition);
-    }
-    @media (max-width: 768px) {
-      .header h1 {
-        font-size: 1.2rem;
-      }
-    }
-
-    .stats-panel {
-      width: 280px;
-      background: var(--card-bg);
-      padding: 15px;
-      border-radius: 8px;
-      margin-left: 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 15px;
-      transition: var(--transition);
-    }
-    @media (max-width: 768px) {
-      .stats-panel {
-        width: 100%;
-        margin-left: 0;
-        margin-top: 15px;
-      }
-    }
-
-    .stat-box {
-      display: flex;
-      justify-content: space-between;
-      padding: 10px 0;
-      border-bottom: 1px solid var(--border);
-      transition: var(--transition);
-    }
-    .stat-box:last-child {
-      border-bottom: none;
-    }
-
-    .tips-panel {
-      background: var(--card-bg);
-      padding: 15px;
-      border-radius: 8px;
-      margin-top: 20px;
-      transition: var(--transition);
-    }
-    @media (max-width: 768px) {
-      .tips-panel {
-        margin-top: 15px;
-        padding: 10px;
-        font-size: 0.9rem;
-      }
-    }
-
-    .tips-panel h3 {
-      margin-bottom: 10px;
-      color: var(--accent);
-      transition: var(--transition);
-    }
-
-    .tips-panel ul {
-      padding-left: 20px;
-      font-size: 0.9rem;
-      line-height: 1.4;
-      transition: var(--transition);
-    }
-    .tips-panel li {
-      margin-bottom: 5px;
-    }
-
-    /* PLAYER CONTAINER */
-    .player-container {
-      flex: 1;
-      background: #000;
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      position: relative;
-      overflow: hidden;
-      min-height: 300px;
-      transition: var(--transition);
-    }
-    @media (max-width: 768px) {
-      .player-container {
-        min-height: 200px;
-      }
-    }
-
-    .player-placeholder {
-      text-align: center;
-      color: #888;
-      font-size: 1.2rem;
-      padding: 20px;
-      transition: var(--transition);
-    }
-
-    /* CHANNELS GRID */
-    .channels-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-      gap: 15px;
-      margin-top: 20px;
-      padding: 10px;
-      overflow-y: auto;
-      max-height: 30vh;
-      transition: var(--transition);
-    }
-    @media (max-width: 768px) {
-      .channels-grid {
-        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-        max-height: 25vh;
-        gap: 10px;
-      }
-    }
-
-    .channel-card {
-      background: var(--card-bg);
-      border-radius: 8px;
-      padding: 10px;
-      cursor: pointer;
-      transition: transform 0.2s, background 0.2s;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      border: 1px solid var(--border);
-    }
-    .channel-card:hover {
-      background: var(--hover);
-      transform: scale(1.02);
-      border-color: var(--accent);
-    }
-    @media (max-width: 768px) {
-      .channel-card {
-        padding: 8px;
-        gap: 8px;
-      }
-    }
-
-    .channel-thumb {
-      width: 40px;
-      height: 40px;
-      background: #333;
-      border-radius: 4px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 0.8rem;
-      color: var(--highlight);
-      overflow: hidden;
-      transition: var(--transition);
-    }
-    .channel-thumb img {
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
-      border-radius: 3px;
-    }
-
-    .channel-info {
-      flex: 1;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      transition: var(--transition);
-    }
-
-    .channel-name {
-      font-weight: bold;
-      font-size: 0.9rem;
-      transition: var(--transition);
-    }
-    @media (max-width: 768px) {
-      .channel-name {
-        font-size: 0.85rem;
-      }
-    }
-
-    .channel-res {
-      font-size: 0.7rem;
-      color: var(--highlight);
-      transition: var(--transition);
-    }
-
-    /* FOOTER */
-    .footer {
-      display: flex;
-      justify-content: space-between;
-      padding: 10px 20px;
-      background: var(--sidebar-bg);
-      font-size: 0.8rem;
-      border-top: 1px solid var(--border);
-      transition: var(--transition);
-    }
-    @media (max-width: 768px) {
-      .footer {
-        flex-direction: column;
-        gap: 5px;
-        padding: 8px 10px;
-        font-size: 0.75rem;
-      }
-    }
-
-    /* VIDEO.JS STYLES */
-    .video-js .vjs-big-play-button {
-      font-size: 3em;
-      line-height: 1.5em;
-      height: 1.5em;
-      width: 1.5em;
-      border: 0.06666em solid #fff;
-      border-radius: 0.3em;
-      transition: var(--transition);
-    }
-    .video-js .vjs-control-bar {
-      background: rgba(0,0,0,0.7);
-      transition: var(--transition);
-    }
-
-    /* LOADER / SPINNER */
-    .loader {
-      display: inline-block;
-      width: 20px;
-      height: 20px;
-      border: 3px solid rgba(255,255,255,0.3);
-      border-radius: 50%;
-      border-top: 3px solid var(--accent);
-      animation: spin 1s linear infinite;
-    }
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-  </style>
+/* Modal */
+.modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.6);
+    justify-content: center;
+    align-items: center;
+}
+.modal-content {
+    background: var(--card);
+    padding: 15px;
+    border-radius: 8px;
+    width: 320px;
+}
+input {
+    width: 100%;
+    margin-top: 8px;
+    padding: 6px;
+}
+</style>
 </head>
+
 <body>
-  <!-- Sidebar -->
-  <div class="sidebar">
-    <div class="logo">IQ-TV</div>
-    <div class="m3u-input-box">
-      <input type="url" id="m3uUrlInput" placeholder="https://example.com/playlist.m3u" />
-      <button id="loadPlaylistBtn">▶️ Load Playlist</button>
+
+<header>
+    <b>📺 IPTV Ultimate</b>
+    <div>
+        <button onclick="toggleTheme()">🌙/☀️</button>
+        <button onclick="openSettings()">⚙️</button>
+        <button onclick="logout()">🔐</button>
     </div>
-    <div class="category-list" id="categoryList">
-      <div class="menu-item active" data-category="all">All Channels</div>
+</header>
+
+<div id="container">
+    <div id="playlist"></div>
+    <div id="player">
+        <video id="video" controls autoplay></video>
+        <div id="epg">EPG: -</div>
     </div>
-    <div class="search-box">
-      <input type="text" id="searchInput" placeholder="Search channels..." />
-    </div>
-    <div class="clear-btn" id="clearPlaylist">Clear Playlist</div>
-  </div>
+</div>
 
-  <!-- Main Content -->
-  <div class="main-content">
-    <div class="header">
-      <h1 id="playlistName">jon.m3u</h1>
-      <div class="stats-panel">
-        <h3>📊 Statistik Cepat</h3>
-        <div class="stat-box">
-          <span>Total Saluran</span>
-          <span id="totalChannels">-</span>
-        </div>
-        <div class="stat-box">
-          <span>Kategori</span>
-          <span id="totalCategories">-</span>
-        </div>
-        <div class="stat-box">
-          <span>Filter Aktif</span>
-          <span id="activeFilter">All</span>
-        </div>
-      </div>
-    </div>
+<footer>
+Creativityright by M. Thorik - Donasi DANA 087888879016
+</footer>
 
-    <div class="player-container" id="playerContainer">
-      <div class="player-placeholder">Pilih saluran untuk mulai menonton</div>
-    </div>
+<!-- SETTINGS -->
+<div class="modal" id="settings">
+<div class="modal-content">
+<h3>Settings</h3>
+<input id="m3u" placeholder="URL M3U">
+<input id="xmltv" placeholder="URL XMLTV (EPG)">
+<input id="newPin" placeholder="PIN Baru">
+<button onclick="saveSettings()" style="width:100%;margin-top:8px">Simpan</button>
+</div>
+</div>
 
-    <div class="tips-panel">
-      <h3>💡 Tips Streaming</h3>
-      <ul>
-        <li>Gunakan <b>Load Playlist</b> untuk muat URL M3U (.m3u/.m3u8).</li>
-        <li>Parsing otomatis: <code>tvg-logo</code>, <code>group-title</code>, resolusi.</li>
-        <li>Klik saluran → langsung streaming (HLS/MPEG-DASH/MP4).</li>
-        <li>Data tersimpan di browser. Tutup & buka lagi tetap ada.</li>
-      </ul>
-    </div>
+<!-- PIN -->
+<div class="modal" id="pin">
+<div class="modal-content">
+<h3>Masukkan PIN</h3>
+<input id="pinInput" type="password">
+<button onclick="checkPIN()" style="width:100%;margin-top:8px">Masuk</button>
+</div>
+</div>
 
-    <div class="channels-grid" id="channelsGrid"></div>
-  </div>
+<script>
+/* CONFIG */
+let cfg = JSON.parse(localStorage.getItem('cfg')) || {
+    pin: "1234",
+    theme: "dark",
+    m3u: "",
+    xmltv: ""
+};
+document.body.className = cfg.theme === "light" ? "light" : "";
 
-  <!-- Footer -->
-  <div class="footer">
-    <span>©2026 Creativityright • M. Thorik | Donasi: DANA 087888879016</span>
-    <span id="current-time">Loading...</span>
-  </div>
+/* PIN */
+function checkPIN(){
+    if(pinInput.value === cfg.pin){
+        pin.style.display='none';
+        if(cfg.m3u) loadM3U(cfg.m3u);
+        if(cfg.xmltv) loadEPG(cfg.xmltv);
+    } else alert("PIN salah");
+}
+function logout(){ pin.style.display='flex'; }
 
-  <!-- Video.js Player -->
-  <script src="https://vjs.zencdn.net/8.16.1/video.min.js"></script>
+/* THEME */
+function toggleTheme(){
+    document.body.classList.toggle('light');
+    cfg.theme = document.body.classList.contains('light') ? "light" : "dark";
+    saveCfg();
+}
 
-  <script>
-    // ===== INITIAL CONFIG =====
-    const DEFAULT_M3U_URL = "https://iptv-org.github.io/iptv/index.m3u"; // Contoh publik
-    const STORAGE_KEY = "iqtv_playlist_cache";
+/* SETTINGS */
+function openSettings(){ settings.style.display='flex'; }
+function saveSettings(){
+    if(m3u.value) cfg.m3u = m3u.value;
+    if(xmltv.value) cfg.xmltv = xmltv.value;
+    if(newPin.value) cfg.pin = newPin.value;
+    saveCfg();
+    settings.style.display='none';
+    loadM3U(cfg.m3u);
+    loadEPG(cfg.xmltv);
+}
+function saveCfg(){
+    localStorage.setItem('cfg', JSON.stringify(cfg));
+}
 
-    // DOM
-    const playerContainer = document.getElementById('playerContainer');
-    const channelsGrid = document.getElementById('channelsGrid');
-    const searchInput = document.getElementById('searchInput');
-    const clearPlaylistBtn = document.getElementById('clearPlaylist');
-    const m3uUrlInput = document.getElementById('m3uUrlInput');
-    const loadPlaylistBtn = document.getElementById('loadPlaylistBtn');
-    const categoryList = document.getElementById('categoryList');
-    const playlistNameEl = document.getElementById('playlistName');
-    const activeFilterEl = document.getElementById('activeFilter');
-    const totalChannelsEl = document.getElementById('totalChannels');
-    const totalCategoriesEl = document.getElementById('totalCategories');
-    const currentTimeEl = document.getElementById('current-time');
-
-    // State
-    let currentCategory = "all";
-    let currentPlayer = null;
-    let allChannels = [];
-    let categories = new Set();
-
-    // ===== UTILS =====
-    function updateCurrentTime() {
-      const now = new Date();
-      currentTimeEl.textContent = now.toLocaleTimeString('id-ID') + " | " + now.toLocaleDateString('id-ID');
-    }
-
-    function parseM3U(text) {
-      const lines = text.split('\n').map(l => l.trim()).filter(l => l);
-      const channels = [];
-      let currentMeta = {};
-
-      for (let i = 0; i < lines.length; i++) {
-        const line = lines[i];
-
-        if (line.startsWith('#EXTINF:')) {
-          // Parse EXTINF
-          const match = line.match(/#EXTINF:-?\d+.*?,(.+)/);
-          currentMeta.name = match ? match[1].trim() : "Unknown";
-
-          // Extract attributes
-          const attrs = {};
-          const attrRegex = /(\w+)="([^"]*)"/g;
-          let m;
-          while ((m = attrRegex.exec(line))) {
-            attrs[m[1].toLowerCase()] = m[2];
-          }
-
-          currentMeta.tvgId = attrs['tvg-id'] || '';
-          currentMeta.tvgName = attrs['tvg-name'] || currentMeta.name;
-          currentMeta.tvgLogo = attrs['tvg-logo'] || '';
-          currentMeta.groupTitle = attrs['group-title'] || 'Uncategorized';
-          currentMeta.resolution = extractResolution(line) || 'SD';
-
-        } else if (line.startsWith('http') && !line.includes('#')) {
-          // URL stream
-          channels.push({
-            name: currentMeta.name,
-            url: line,
-            category: currentMeta.groupTitle,
-            logo: currentMeta.tvgLogo,
-            resolution: currentMeta.resolution
-          });
-          currentMeta = {};
+/* M3U */
+async function loadM3U(url){
+    const t = await fetch(url).then(r=>r.text());
+    parseM3U(t);
+}
+function parseM3U(txt){
+    playlist.innerHTML="";
+    let lines=txt.split('\n'), cat={}, cur={};
+    lines.forEach(l=>{
+        if(l.startsWith("#EXTINF")){
+            cur={
+                name:l.split(',').pop(),
+                group:(l.match(/group-title="([^"]+)"/)||[])[1]||"Lainnya",
+                logo:(l.match(/tvg-logo="([^"]+)"/)||[])[1]||""
+            };
+        } else if(l.startsWith("http")){
+            cur.url=l.trim();
+            cat[cur.group]=cat[cur.group]||[];
+            cat[cur.group].push({...cur});
         }
-      }
-      return channels;
-    }
-
-    function extractResolution(line) {
-      const resMatch = line.match(/([0-9]{3,4}[pP]|[hH][dD]|[sS][dD]|[4][kK])/);
-      if (resMatch) {
-        const r = resMatch[0].toUpperCase();
-        if (r === 'HD') return 'HD';
-        if (r === 'SD') return 'SD';
-        if (r === '4K') return '4K';
-        return r;
-      }
-      return null;
-    }
-
-    function renderCategories() {
-      categoryList.innerHTML = '';
-      const catArray = Array.from(categories).sort((a, b) => a.localeCompare(b));
-      const items = ['All Channels'].concat(catArray);
-      items.forEach(cat => {
-        const el = document.createElement('div');
-        el.className = 'menu-item ' + (cat === 'All Channels' ? 'active' : '');
-        el.dataset.category = cat === 'All Channels' ? 'all' : cat;
-        el.textContent = cat;
-        el.addEventListener('click', () => {
-          document.querySelectorAll('.menu-item').forEach(e => e.classList.remove('active'));
-          el.classList.add('active');
-          currentCategory = el.dataset.category;
-          activeFilterEl.textContent = cat;
-          renderChannels(currentCategory, searchInput.value.trim());
+    });
+    for(let g in cat){
+        playlist.innerHTML+=`<div class="category">${g}</div>`;
+        cat[g].forEach(c=>{
+            let d=document.createElement('div');
+            d.className="channel";
+            d.innerHTML=`<img src="${c.logo}" onerror="this.src='https://via.placeholder.com/32'">${c.name}`;
+            d.onclick=()=>play(c.url,c.name);
+            playlist.appendChild(d);
         });
-        categoryList.appendChild(el);
-      });
-      totalCategoriesEl.textContent = categories.size;
     }
+}
 
-    function renderChannels(filter = "all", searchTerm = "") {
-      channelsGrid.innerHTML = "";
-      let filtered = allChannels.filter(ch => {
-        if (filter !== "all" && ch.category !== filter) return false;
-        if (searchTerm && !ch.name.toLowerCase().includes(searchTerm.toLowerCase())) return false;
-        return true;
-      });
+/* PLAYER */
+let hls;
+function play(url,name){
+    epg.innerText="EPG: loading...";
+    if(Hls.isSupported()){
+        if(hls)hls.destroy();
+        hls=new Hls();
+        hls.loadSource(url);
+        hls.attachMedia(video);
+    } else video.src=url;
+    showEPG(name);
+}
 
-      filtered.forEach(ch => {
-        const card = document.createElement('div');
-        card.className = 'channel-card';
-        card.dataset.url = ch.url;
-        card.dataset.name = ch.name;
-        card.innerHTML = `
-          <div class="channel-thumb">
-            ${ch.logo ? `<img src="${ch.logo}" alt="${ch.name}">` : `<span>${ch.resolution}</span>`}
-          </div>
-          <div class="channel-info">
-            <div class="channel-name">${ch.name}</div>
-            <div class="channel-res">${ch.category} • ${ch.resolution}</div>
-          </div>
-        `;
-        card.addEventListener('click', () => playChannel(ch));
-        channelsGrid.appendChild(card);
-      });
-
-      totalChannelsEl.textContent = filtered.length;
-    }
-
-    function playChannel(channel) {
-      if (currentPlayer) {
-        currentPlayer.dispose();
-        currentPlayer = null;
-      }
-
-      playerContainer.innerHTML = '<div class="player-placeholder"><div class="loader"></div> Loading...</div>';
-
-      const videoEl = document.createElement('video');
-      videoEl.id = 'my-video';
-      videoEl.className = 'video-js vjs-default-skin';
-      videoEl.controls = true;
-      videoEl.preload = 'auto';
-      videoEl.style.width = '100%';
-      videoEl.style.height = '100%';
-      playerContainer.innerHTML = '';
-      playerContainer.appendChild(videoEl);
-
-      currentPlayer = videojs('my-video', {
-        autoplay: true,
-        controls: true,
-        fluid: true,
-        techOrder: ['html5'],
-        sources: [{
-          src: channel.url,
-          type: channel.url.endsWith('.mp4') ? 'video/mp4' : 'application/x-mpegURL'
-        }]
-      });
-
-      playlistNameEl.textContent = channel.name;
-    }
-
-    function saveToCache(m3uUrl, channels) {
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify({
-          timestamp: Date.now(),
-          m3uUrl,
-          channels
-        }));
-      } catch (e) {
-        console.warn("Gagal simpan ke localStorage", e);
-      }
-    }
-
-    function loadFromCache() {
-      try {
-        const raw = localStorage.getItem(STORAGE_KEY);
-        if (!raw) return null;
-        return JSON.parse(raw);
-      } catch (e) {
-        return null;
-      }
-    }
-
-    async function loadPlaylist(url) {
-      if (!url) {
-        alert("Masukkan URL M3U terlebih dahulu!");
-        return;
-      }
-
-      loadPlaylistBtn.disabled = true;
-      loadPlaylistBtn.textContent = "⏳ Loading...";
-
-      try {
-        const res = await fetch(url);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const text = await res.text();
-
-        const parsed = parseM3U(text);
-        allChannels = parsed;
-        categories = new Set(parsed.map(ch => ch.category));
-
-        saveToCache(url, parsed);
-        renderCategories();
-        renderChannels();
-        playlistNameEl.textContent = new URL(url).pathname.split('/').pop() || "Playlist";
-
-        alert(`✅ Berhasil muat ${parsed.length} channel!`);
-      } catch (err) {
-        alert("❌ Gagal muat playlist:\n" + err.message);
-        console.error(err);
-      } finally {
-        loadPlaylistBtn.disabled = false;
-        loadPlaylistBtn.textContent = "▶️ Load Playlist";
-      }
-    }
-
-    // ===== INIT =====
-    setInterval(updateCurrentTime, 1000);
-    updateCurrentTime();
-
-    // Load from cache on start
-    const cached = loadFromCache();
-    if (cached && cached.channels && cached.channels.length > 0) {
-      allChannels = cached.channels;
-      categories = new Set(allChannels.map(ch => ch.category));
-      renderCategories();
-      renderChannels();
-      playlistNameEl.textContent = cached.m3uUrl.split('/').pop() || "Cached Playlist";
-      m3uUrlInput.value = cached.m3uUrl;
-    } else {
-      m3uUrlInput.value = DEFAULT_M3U_URL;
-    }
-
-    // Events
-    loadPlaylistBtn.addEventListener('click', () => loadPlaylist(m3uUrlInput.value.trim()));
-    m3uUrlInput.addEventListener('keypress', e => {
-      if (e.key === 'Enter') loadPlaylist(m3uUrlInput.value.trim());
+/* EPG */
+let epgData=[];
+async function loadEPG(url){
+    const xml=await fetch(url).then(r=>r.text());
+    const doc=new DOMParser().parseFromString(xml,"text/xml");
+    epgData=[...doc.querySelectorAll("programme")];
+}
+function showEPG(ch){
+    let now=new Date();
+    let p=epgData.find(e=>{
+        let s=parseEPG(e.getAttribute("start"));
+        let en=parseEPG(e.getAttribute("stop"));
+        return e.getAttribute("channel")?.includes(ch)&&now>=s&&now<=en;
     });
+    epg.innerText=p?`EPG: ${p.querySelector("title").textContent}`:"EPG: Tidak tersedia";
+}
+function parseEPG(t){
+    return new Date(t.substr(0,4),t.substr(4,2)-1,t.substr(6,2),t.substr(8,2),t.substr(10,2));
+}
 
-    searchInput.addEventListener('input', () => {
-      renderChannels(currentCategory, searchInput.value.trim());
-    });
+/* INIT */
+pin.style.display='flex';
+</script>
 
-    clearPlaylistBtn.addEventListener('click', () => {
-      if (confirm("Yakin ingin menghapus playlist & cache?")) {
-        localStorage.removeItem(STORAGE_KEY);
-        allChannels = [];
-        categories.clear();
-        categoryList.innerHTML = '<div class="menu-item active" data-category="all">All Channels</div>';
-        renderChannels();
-        playerContainer.innerHTML = '<div class="player-placeholder">Pilih saluran untuk mulai menonton</div>';
-        playlistNameEl.textContent = "jon.m3u";
-        m3uUrlInput.value = "";
-      }
-    });
-
-    // Set initial values
-    activeFilterEl.textContent = "All Channels";
-    totalChannelsEl.textContent = "0";
-    totalCategoriesEl.textContent = "0";
-  </script>
 </body>
 </html>
