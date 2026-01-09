@@ -1,199 +1,290 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>IPTV Smart TV FINAL</title>
+<title>IQ-TV</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<!-- HLS.JS -->
 <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 
 <style>
-:root{--bg:#0f172a;--fg:#e5e7eb;--card:#020617;--accent:#2563eb}
-.light{--bg:#f8fafc;--fg:#020617;--card:#e5e7eb}
-body{margin:0;font-family:Arial;background:var(--bg);color:var(--fg)}
-header,footer{background:var(--card);padding:10px 16px;display:flex;justify-content:space-between}
-#container{display:flex;height:calc(100vh - 100px)}
-#playlist{width:360px;overflow-y:auto}
-.category{padding:8px;font-weight:bold;background:rgba(255,255,255,.08)}
-.channel{display:flex;gap:10px;align-items:center;padding:10px;cursor:pointer}
-.channel:focus{outline:3px solid var(--accent)}
-.channel img{width:48px;height:48px;border-radius:6px;background:#fff}
-#player{flex:1;position:relative}
-video{width:100%;height:100%;background:black}
-#zap{position:absolute;bottom:120px;left:30px;background:rgba(0,0,0,.75);padding:15px;border-radius:10px;display:none}
-#zap.show{display:flex;gap:15px}
-#zap img{width:64px;height:64px;background:#fff;border-radius:8px}
-#error{display:none;position:absolute;inset:0;background:rgba(0,0,0,.7);align-items:center;justify-content:center}
-#error .box{background:var(--card);padding:20px;border-radius:10px;text-align:center}
-button{background:var(--accent);color:#fff;border:none;border-radius:6px;padding:8px 12px}
+/* ================== CORE ================== */
+body {
+    margin: 0;
+    background: #0f0c14;
+    color: #fff;
+    font-family: Segoe UI, sans-serif;
+}
+.hidden { display: none; }
+
+/* ================== LAYOUT ================== */
+.container { display: flex; height: 100vh; }
+.sidebar {
+    width: 230px;
+    background: #09070c;
+    overflow-y: auto;
+}
+.menu-item, .clear-playlist {
+    padding: 14px;
+    cursor: pointer;
+}
+.menu-item.active { background: #1e1a24; }
+.clear-playlist { color: #e17055; }
+
+.main-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+.header {
+    padding: 10px 15px;
+    display: flex;
+    justify-content: space-between;
+    border-bottom: 1px solid #222;
+}
+.search-bar input {
+    background: #14101a;
+    border: none;
+    color: #fff;
+    padding: 6px 10px;
+}
+
+.video-player {
+    height: 380px;
+    background: black;
+}
+.actual-video-player {
+    width: 100%;
+    height: 100%;
+    background: black;
+}
+
+.channels-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill,minmax(160px,1fr));
+    gap: 12px;
+    padding: 15px;
+}
+.channel-card {
+    background: #14101a;
+    padding: 12px;
+    cursor: pointer;
+    border-radius: 8px;
+}
+.channel-card:hover { background: #1e1a24; }
+
+/* ================== UPLOAD ================== */
+.upload-screen {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+.upload-option {
+    background: #14101a;
+    padding: 20px;
+    margin: 10px;
+    cursor: pointer;
+}
+.file-input { display: none; }
 </style>
 </head>
 
 <body>
 
-<header>
-<b>📺 IPTV SMART TV</b>
-<div>
-<button onclick="toggleTheme()">🌙</button>
-<button onclick="openSettings()">⚙️</button>
-</div>
-</header>
+<!-- ================== UPLOAD ================== -->
+<div id="upload-screen" class="upload-screen">
+    <h1>IQ-TV</h1>
 
-<div id="container">
-<div id="playlist"></div>
+    <div class="upload-option" id="upload-file-option">📁 Upload M3U</div>
+    <div class="upload-option" id="url-option">🔗 URL M3U</div>
 
-<div id="player">
-<video id="video" playsinline muted></video>
-
-<div id="zap">
-<img id="zapLogo">
-<div>
-<b id="zapName"></b><br>
-<span id="zapGroup"></span>
-</div>
+    <div id="upload-form" class="hidden">
+        <input type="file" id="m3u-file" class="file-input" accept=".m3u,.m3u8">
+        <input type="text" id="m3u-url" placeholder="https://example.com/list.m3u">
+        <br><br>
+        <button id="upload-submit">Mulai</button>
+        <p id="url-error" style="color:red"></p>
+    </div>
 </div>
 
-<div id="error">
-<div class="box">
-<h3>⚠️ Stream Error</h3>
-<p id="errorMsg"></p>
-<button onclick="zapNext()">▶ Channel Berikutnya</button>
-</div>
-</div>
-</div>
-</div>
+<!-- ================== APP ================== -->
+<div id="app-container" class="container hidden">
 
-<footer>
-Creativityright by M. Thorik - Donasi DANA 087888879016
-</footer>
+    <div class="sidebar">
+        <div class="menu-item active" data-category="all">Semua</div>
+        <div class="menu-item" data-category="news">News</div>
+        <div class="menu-item" data-category="sports">Sports</div>
+        <div class="menu-item" data-category="movies">Movies</div>
+        <div class="menu-item" data-category="religious">Religious</div>
+        <div class="clear-playlist" id="clear-playlist">🗑 Clear</div>
+    </div>
+
+    <div class="main-content">
+        <div class="header">
+            <div id="playlist-title">playlist.m3u</div>
+            <div class="search-bar">
+                <input id="search-input" placeholder="Search channel">
+            </div>
+        </div>
+
+        <div id="video-player" class="video-player">
+            <div style="padding:20px">Pilih channel</div>
+        </div>
+
+        <div class="channels-grid" id="channels-grid"></div>
+    </div>
+</div>
 
 <script>
-/* ================= CONFIG ================= */
-let cfg = JSON.parse(localStorage.getItem('cfg')) || { theme:'dark', m3u:'' };
-document.body.className = cfg.theme === 'light' ? 'light' : '';
+/* ================== STATE ================== */
+let currentPlaylist = [];
+let filteredChannels = [];
+let currentCategory = 'all';
+let hlsInstance = null;
 
-function toggleTheme(){
-document.body.classList.toggle('light');
-cfg.theme=document.body.classList.contains('light')?'light':'dark';
-localStorage.setItem('cfg',JSON.stringify(cfg));
-}
+/* ================== ELEMENTS ================== */
+const uploadScreen = document.getElementById('upload-screen');
+const appContainer = document.getElementById('app-container');
+const uploadForm = document.getElementById('upload-form');
+const uploadFileOption = document.getElementById('upload-file-option');
+const urlOption = document.getElementById('url-option');
+const m3uFile = document.getElementById('m3u-file');
+const m3uUrl = document.getElementById('m3u-url');
+const uploadSubmit = document.getElementById('upload-submit');
+const channelsGrid = document.getElementById('channels-grid');
+const videoPlayer = document.getElementById('video-player');
+const searchInput = document.getElementById('search-input');
+const playlistTitle = document.getElementById('playlist-title');
 
-/* ================= M3U PARSER ================= */
-let channels=[], groups=[];
-function parseM3U(txt){
-channels=[];groups=[];
-let cur=null;
-txt.split(/\r?\n/).forEach(l=>{
-l=l.trim();
-if(l.startsWith('#EXTINF')){
-const n=l.match(/,(.*)$/);
-const g=l.match(/group-title="([^"]+)"/i);
-const logo=l.match(/tvg-logo="([^"]+)"/i);
-cur={
-id:Math.random(),
-name:n?n[1]:'Unknown',
-group:g?g[1]:'Uncategorized',
-logo:logo?logo[1]:'',
-url:''
+/* ================== INIT ================== */
+uploadFileOption.onclick = () => {
+    uploadForm.classList.remove('hidden');
+    m3uFile.click();
 };
-if(!groups.includes(cur.group)) groups.push(cur.group);
-}
-else if(cur && l.match(/^(http|rtmp|rtsp)/i)){
-cur.url=l;
-channels.push(cur);
-cur=null;
-}
-});
-}
+urlOption.onclick = () => uploadForm.classList.remove('hidden');
 
-/* ================= LOAD ================= */
-async function loadM3U(url){
-const txt=await fetch(url).then(r=>r.text());
-parseM3U(txt);
-render();
-}
+uploadSubmit.onclick = () => {
+    if (m3uFile.files.length) readFile(m3uFile.files[0]);
+    else if (m3uUrl.value) fetchUrl(m3uUrl.value);
+};
 
-/* ================= UI ================= */
-function render(){
-playlist.innerHTML='';
-groups.forEach(g=>{
-playlist.innerHTML+=`<div class="category">${g}</div>`;
-channels.filter(c=>c.group===g).forEach(c=>{
-const i=channels.indexOf(c);
-const d=document.createElement('div');
-d.className='channel';d.tabIndex=0;
-d.innerHTML=`<img src="${c.logo}" onerror="this.src='https://via.placeholder.com/48'">${c.name}`;
-d.onclick=()=>playIndex(i);
-playlist.appendChild(d);
-});
-});
+/* ================== PARSER ================== */
+function parseM3U(text) {
+    const lines = text.split('\n');
+    const list = [];
+    let ch = null;
+
+    lines.forEach(l => {
+        l = l.trim();
+        if (l.startsWith('#EXTINF')) {
+            const name = l.split(',').pop();
+            const group = (l.match(/group-title="([^"]+)"/)||[])[1] || 'undefined';
+            ch = { name, category: group.toLowerCase(), url: '' };
+        } else if (l && !l.startsWith('#') && ch) {
+            ch.url = l;
+            list.push(ch);
+            ch = null;
+        }
+    });
+    return list;
 }
 
-/* ================= PLAYER FIX ================= */
-let hls=null,current=-1;
-function playIndex(i){
-if(i<0||i>=channels.length) return;
-current=i;
-playChannel(channels[i]);
-showZap(channels[i],i);
+/* ================== LOAD ================== */
+function readFile(file) {
+    const r = new FileReader();
+    r.onload = e => loadPlaylist(parseM3U(e.target.result), file.name);
+    r.readAsText(file);
 }
 
-function playChannel(ch){
-const v=video;
-v.pause();
-v.src='';
-v.muted=true;
-
-if(hls){hls.destroy();hls=null;}
-
-const isHls = ch.url.includes('.m3u8');
-
-if(isHls && window.Hls && Hls.isSupported()){
-hls=new Hls({lowLatencyMode:true});
-hls.attachMedia(v);
-hls.on(Hls.Events.MEDIA_ATTACHED,()=>{
-hls.loadSource(ch.url);
-});
-hls.on(Hls.Events.ERROR,(e,d)=>{
-if(d.fatal) showError("HLS Error / Jaringan");
-});
-}else{
-v.src=ch.url;
+function fetchUrl(url) {
+    fetch(url)
+        .then(r => r.text())
+        .then(t => loadPlaylist(parseM3U(t), url.split('/').pop()))
+        .catch(() => alert('CORS / URL gagal'));
 }
 
-v.onerror=()=>showError("Tidak bisa memutar stream");
-v.onstalled=()=>showError("Stream terhenti");
-v.onwaiting=()=>console.log("Buffering");
+function loadPlaylist(list, name) {
+    currentPlaylist = list;
+    filteredChannels = list;
+    playlistTitle.textContent = name;
 
-v.play().catch(()=>showError("Autoplay diblokir"));
+    localStorage.setItem('iqtv_playlist', JSON.stringify(list));
+    localStorage.setItem('iqtv_playlist_name', name);
+
+    uploadScreen.classList.add('hidden');
+    appContainer.classList.remove('hidden');
+    renderChannels();
 }
 
-/* ================= ZAP ================= */
-function showZap(c,i){
-zapLogo.src=c.logo||'https://via.placeholder.com/64';
-zapName.innerText=(i+1)+'. '+c.name;
-zapGroup.innerText=c.group;
-zap.classList.add('show');
-setTimeout(()=>zap.classList.remove('show'),2500);
+/* ================== RENDER ================== */
+function renderChannels() {
+    channelsGrid.innerHTML = '';
+    filteredChannels.forEach(c => {
+        const d = document.createElement('div');
+        d.className = 'channel-card';
+        d.innerText = c.name;
+        d.onclick = () => playChannel(c);
+        channelsGrid.appendChild(d);
+    });
 }
 
-/* ================= ERROR ================= */
-function showError(msg){
-errorMsg.innerText=msg;
-error.style.display='flex';
-}
-function zapNext(){
-error.style.display='none';
-playIndex(current+1);
+/* ================== PLAYER ================== */
+function playChannel(channel) {
+    videoPlayer.innerHTML = `<video id="video" class="actual-video-player" controls autoplay></video>`;
+    const video = document.getElementById('video');
+
+    if (hlsInstance) { hlsInstance.destroy(); hlsInstance = null; }
+
+    if (video.canPlayType('application/vnd.apple.mpegurl')) {
+        video.src = channel.url;
+        enableTracks(video);
+    } else if (Hls.isSupported()) {
+        hlsInstance = new Hls();
+        hlsInstance.loadSource(channel.url);
+        hlsInstance.attachMedia(video);
+
+        hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => {
+            if (hlsInstance.audioTracks.length) hlsInstance.audioTrack = 0;
+            if (hlsInstance.subtitleTracks.length) hlsInstance.subtitleTrack = 0;
+        });
+    }
+
+    enhancePlayer(video);
 }
 
-/* ================= REMOTE ================= */
-document.addEventListener('keydown',e=>{
-if(e.key==='ArrowUp') playIndex(current-1);
-if(e.key==='ArrowDown') playIndex(current+1);
-});
+function enableTracks(video) {
+    for (const t of video.textTracks) t.mode = 'showing';
+}
 
-/* AUTO LOAD */
-if(cfg.m3u) loadM3U(cfg.m3u);
+function enhancePlayer(video) {
+    video.ondblclick = () => video.requestFullscreen();
+    document.onkeydown = e => {
+        if (e.key === 'p' && document.pictureInPictureEnabled)
+            video.requestPictureInPicture();
+    };
+}
+
+/* ================== SEARCH ================== */
+searchInput.oninput = () => {
+    const q = searchInput.value.toLowerCase();
+    filteredChannels = currentPlaylist.filter(c => c.name.toLowerCase().includes(q));
+    renderChannels();
+};
+
+/* ================== CLEAR ================== */
+document.getElementById('clear-playlist').onclick = () => {
+    localStorage.clear();
+    location.reload();
+};
+
+/* ================== AUTO LOAD ================== */
+const saved = localStorage.getItem('iqtv_playlist');
+if (saved) {
+    loadPlaylist(JSON.parse(saved), localStorage.getItem('iqtv_playlist_name'));
+}
 </script>
 
 </body>
