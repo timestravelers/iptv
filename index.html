@@ -11,7 +11,7 @@
       padding: 0;
     }
     body {
-      background: #000;
+      background: #0a0a0a;
       color: #f0f0f0;
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       height: 100vh;
@@ -74,20 +74,19 @@
       flex: 1;
       display: flex;
       flex-direction: column;
-      background: #000;
+      background: #0f0f0f;
     }
 
-    /* Navbar Sticky */
+    /* Navbar Sticky - Tidak Scroll */
     #navbar {
-      position: sticky;
-      top: 0;
-      z-index: 100;
+      height: 50px;
       display: flex;
-      padding: 12px 20px;
-      background: rgba(0,0,0,0.7);
+      padding: 0 20px;
+      background: #151515;
       border-bottom: 1px solid #333;
       align-items: center;
       gap: 20px;
+      flex-shrink: 0;
     }
     #app-logo {
       font-size: 1.3rem;
@@ -134,20 +133,21 @@
       color: #4fc3f7;
     }
 
-    /* Main Content */
+    /* Main Content - Flex row */
     #main-content {
       display: flex;
       flex: 1;
-      overflow: hidden;
+      overflow: hidden; /* Penting: mencegah scroll global */
     }
 
-    /* Sidebar Groups */
+    /* Sidebar Groups - Tidak Scroll */
     #groups-panel {
       width: 200px;
-      background: rgba(0,0,0,0.6);
+      background: #1a1a1a;
       padding: 15px 10px;
-      overflow-y: auto;
+      overflow-y: auto; /* Hanya scroll jika grup terlalu banyak */
       border-right: 1px solid #333;
+      flex-shrink: 0;
     }
     .group-item {
       padding: 10px 12px;
@@ -157,31 +157,30 @@
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      color: #ddd;
     }
     .group-item:hover,
     .group-item.active {
       background: #2a5a8c;
-      color: white;
     }
 
-    /* Channels Area */
+    /* Channels Container - Hanya ini yang scrollable */
     #channels-container {
       flex: 1;
       display: flex;
       flex-direction: column;
-      overflow: hidden;
+      overflow: hidden; /* Kontainer tidak scroll */
     }
 
-    /* Video Player - FULLSCREEN by default */
+    /* Video Player - Fixed Height, Tidak Scroll */
     #video-player {
-      height: 100vh;
+      height: 45vh;
       background: #000;
       display: flex;
       align-items: center;
       justify-content: center;
       padding: 10px;
       position: relative;
+      flex-shrink: 0;
     }
     #player {
       width: 100%;
@@ -223,63 +222,71 @@
       display: none;
     }
 
-    /* Channel Grid */
+    /* Channel Grid - SATU-SATUNYA AREA YANG SCROLL */
     #channel-grid {
-      position: absolute;
-      bottom: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      display: flex;
-      gap: 8px;
-      padding: 10px;
-      background: rgba(0,0,0,0.7);
-      border-radius: 10px;
-      max-width: 90vw;
-      overflow-x: auto;
-      scrollbar-width: none;
+      flex: 1;
+      padding: 15px;
+      overflow-y: auto; /* Hanya scroll vertikal di sini */
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 12px;
+      /* Scrollbar styling */
+      scrollbar-width: thin;
+      scrollbar-color: #2a5a8c #1a1a1a;
     }
     #channel-grid::-webkit-scrollbar {
-      display: none;
+      width: 8px;
     }
+    #channel-grid::-webkit-scrollbar-track {
+      background: #1a1a1a;
+    }
+    #channel-grid::-webkit-scrollbar-thumb {
+      background: #2a5a8c;
+      border-radius: 4px;
+    }
+    #channel-grid::-webkit-scrollbar-thumb:hover {
+      background: #3a7aae;
+    }
+
     .channel-card {
       display: flex;
       align-items: center;
-      gap: 6px;
-      padding: 8px 12px;
+      gap: 10px;
+      padding: 10px;
       background: #1e1e1e;
-      border-radius: 6px;
+      border-radius: 8px;
       cursor: pointer;
-      min-width: 120px;
-      white-space: nowrap;
     }
     .channel-card:hover,
     .channel-card.active {
       background: #2a5a8c;
     }
     .channel-card img {
-      width: 24px;
-      height: 24px;
+      width: 36px;
+      height: 36px;
       object-fit: cover;
       border-radius: 4px;
       background: #333;
     }
     .channel-card span {
-      font-size: 0.9rem;
+      font-size: 1rem;
+      white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
     }
 
-    /* Footer Donasi */
+    /* Footer Donasi - Sticky di bawah */
     #donation-footer {
-      position: absolute;
-      bottom: 10px;
-      right: 10px;
-      background: rgba(0, 0, 0, 0.6);
-      padding: 4px 10px;
-      font-size: 0.8rem;
+      height: 36px;
+      background: rgba(0, 0, 0, 0.85);
+      padding: 0 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.9rem;
       color: #aaa;
-      border-radius: 10px;
-      z-index: 90;
+      border-top: 1px solid #333;
+      flex-shrink: 0;
     }
     #donation-link {
       color: #ff9800;
@@ -399,8 +406,7 @@
     @media (max-width: 600px) {
       #playlist-name { display: none; }
       #search-box { width: 120px; }
-      .channel-card { min-width: 100px; padding: 6px 10px; }
-      .channel-card span { font-size: 0.85rem; }
+      #groups-panel { display: none; }
     }
   </style>
 </head>
@@ -421,6 +427,7 @@
 
 <!-- MAIN APP -->
 <div id="app">
+  <!-- Navbar - Tidak scroll -->
   <nav id="navbar">
     <div id="app-logo">SmartIPTV</div>
     <div id="playlist-name">Playlist</div>
@@ -430,15 +437,30 @@
     <button id="settings-btn" title="Pengaturan">⚙️</button>
   </nav>
 
-  <div id="video-player">
-    <video id="player" playsinline></video>
-    <div id="player-loading">Memuat stream...</div>
-    <div id="player-error"></div>
-    <div id="channel-grid"></div>
-    <footer id="donation-footer">
-      💖 by tHoRicQ
-    </footer>
+  <!-- Main Content -->
+  <div id="main-content">
+    <!-- Sidebar Groups - Tidak scroll (kecuali jika grup terlalu banyak) -->
+    <div id="groups-panel"></div>
+    
+    <!-- Channels Container -->
+    <div id="channels-container">
+      <!-- Video Player - Fixed, tidak scroll -->
+      <div id="video-player">
+        <video id="player" controls playsinline></video>
+        <div id="player-loading">Memuat stream...</div>
+        <div id="player-error"></div>
+      </div>
+      
+      <!-- Channel Grid - SATU-SATUNYA AREA YANG BISA DI-SCROLL -->
+      <div id="channel-grid"></div>
+    </div>
   </div>
+
+  <!-- Footer - Sticky di bawah -->
+  <footer id="donation-footer">
+    💖 Dukung Pengembangan: 
+    <a id="donation-link" href="https://saweria.co/yourname" target="_blank" rel="noopener noreferrer">Donasi Sekarang</a>
+  </footer>
 </div>
 
 <!-- SETTINGS MODAL -->
@@ -467,8 +489,11 @@
       <div class="about-info">
         <h3>Tentang Aplikasi</h3>
         <p><strong>Versi:</strong> 1.0.0</p>
-        <p><strong>Deskripsi:</strong> IPTV Player otomatis dengan fullscreen.</p>
+        <p><strong>Deskripsi:</strong> IPTV Player ringan berbasis web, mirip Zaltv.</p>
         <p><strong>Creativityright by tHoRicQ</strong></p>
+        <p style="margin-top: 15px; font-size: 0.9rem; color: #888;">
+          Aplikasi ini dibuat untuk tujuan edukasi dan penggunaan pribadi.
+        </p>
       </div>
     </div>
   </div>
@@ -481,16 +506,25 @@ let groups = [];
 let currentChannelIndex = -1;
 let currentPlaylistName = "Playlist";
 
+// Fullscreen helper
 function requestFullscreen(element) {
-  if (element.requestFullscreen) element.requestFullscreen();
-  else if (element.webkitRequestFullscreen) element.webkitRequestFullscreen();
-  else if (element.msRequestFullscreen) element.msRequestFullscreen();
+  if (element.requestFullscreen) {
+    element.requestFullscreen();
+  } else if (element.webkitRequestFullscreen) {
+    element.webkitRequestFullscreen();
+  } else if (element.msRequestFullscreen) {
+    element.msRequestFullscreen();
+  }
 }
 
 function exitFullscreen() {
-  if (document.exitFullscreen) document.exitFullscreen();
-  else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
-  else if (document.msExitFullscreen) document.msExitFullscreen();
+  if (document.exitFullscreen) {
+    document.exitFullscreen();
+  } else if (document.webkitExitFullscreen) {
+    document.webkitExitFullscreen();
+  } else if (document.msExitFullscreen) {
+    document.msExitFullscreen();
+  }
 }
 
 function isFullscreen() {
@@ -504,18 +538,29 @@ document.addEventListener("DOMContentLoaded", () => {
   const playlistUrlInput = document.getElementById('playlist-url');
   const playlistNameEl = document.getElementById('playlist-name');
   const searchInput = document.getElementById('search');
+  const groupsPanel = document.getElementById('groups-panel');
   const channelGrid = document.getElementById('channel-grid');
   const player = document.getElementById('player');
   const playerLoading = document.getElementById('player-loading');
   const playerError = document.getElementById('player-error');
   const errorMessage = document.getElementById('error-message');
   
+  // Modal elements
   const settingsModal = document.getElementById('settings-modal');
   const settingsBtn = document.getElementById('settings-btn');
   const closeModal = document.querySelector('.close-modal');
+  const tabBtns = document.querySelectorAll('.tab-btn');
   const modalFileInput = document.getElementById('modal-file-input');
   const modalUrlInput = document.getElementById('modal-url-input');
   const applySettingsBtn = document.getElementById('apply-settings');
+
+  document.addEventListener('fullscreenchange', handleFullscreenChange);
+  document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+  document.addEventListener('msfullscreenchange', handleFullscreenChange);
+
+  function handleFullscreenChange() {
+    if (!isFullscreen()) {}
+  }
 
   function showError(msg) {
     errorMessage.textContent = msg;
@@ -526,10 +571,12 @@ document.addEventListener("DOMContentLoaded", () => {
     playerLoading.style.display = 'none';
     playerError.textContent = msg;
     playerError.style.display = 'flex';
+    player.style.display = 'none';
   }
 
   function hidePlayerError() {
     playerError.style.display = 'none';
+    player.style.display = 'block';
   }
 
   function parseM3U(text) {
@@ -560,29 +607,51 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function loadPlaylist(list, name) {
     if (list.length === 0) {
-      showError("❌ Tidak ada channel valid.");
+      showError("❌ Tidak ada channel valid dalam playlist.");
       return;
     }
 
     channels = list;
     currentPlaylistName = name;
-    playlistNameEl.textContent = name;
+
+    const groupSet = new Set(list.map(c => c.group));
+    groups = Array.from(groupSet).sort();
 
     startupScreen.style.display = 'none';
     app.style.display = 'flex';
+    playlistNameEl.textContent = name;
 
+    renderGroups();
     renderChannels(list);
     
-    // Putar channel pertama & fullscreen
-    if (list.length > 0) {
-      playAndFullscreen(list[0], 0);
-    }
+    player.innerHTML = '';
+    hidePlayerError();
+    player.controls = true;
+  }
+
+  function renderGroups() {
+    groupsPanel.innerHTML = '';
+    groups.forEach(group => {
+      const el = document.createElement('div');
+      el.className = 'group-item';
+      el.textContent = group;
+      el.onclick = () => {
+        document.querySelectorAll('.group-item').forEach(g => g.classList.remove('active'));
+        el.classList.add('active');
+        const filtered = channels.filter(c => c.group === group);
+        renderChannels(filtered);
+      };
+      groupsPanel.appendChild(el);
+    });
+    if (groupsPanel.firstChild) groupsPanel.firstChild.classList.add('active');
   }
 
   function renderChannels(list) {
     channelGrid.innerHTML = '';
-    if (list.length === 0) return;
-    
+    if (list.length === 0) {
+      channelGrid.innerHTML = '<div style="color:#888;padding:20px;">Tidak ada channel.</div>';
+      return;
+    }
     list.forEach((ch, index) => {
       const el = document.createElement('div');
       el.className = 'channel-card';
@@ -591,12 +660,12 @@ document.addEventListener("DOMContentLoaded", () => {
         ${ch.logo ? `<img src="${ch.logo}" onerror="this.style.display='none'" />` : ''}
         <span title="${ch.name}">${ch.name}</span>
       `;
-      el.onclick = () => playAndFullscreen(ch, index);
+      el.onclick = () => playChannel(ch, index);
       channelGrid.appendChild(el);
     });
   }
 
-  function playAndFullscreen(channel, index) {
+  function playChannel(channel, index) {
     currentChannelIndex = index;
     document.querySelectorAll('.channel-card').forEach((el, i) => {
       el.classList.toggle('active', i === index);
@@ -606,6 +675,7 @@ document.addEventListener("DOMContentLoaded", () => {
       player.hls.destroy();
       player.hls = null;
     }
+    player.innerHTML = '';
     player.src = '';
     hidePlayerError();
     playerLoading.style.display = 'flex';
@@ -613,33 +683,37 @@ document.addEventListener("DOMContentLoaded", () => {
     const url = channel.url;
 
     if (Hls.isSupported() && url.includes('.m3u8')) {
-      const hls = new Hls({ enableWorker: false, lowLatencyMode: false });
+      const hls = new Hls({
+        enableWorker: false,
+        lowLatencyMode: false
+      });
       player.hls = hls;
       hls.loadSource(url);
       hls.attachMedia(player);
       
       hls.on(Hls.Events.MANIFEST_PARSED, () => {
         playerLoading.style.display = 'none';
-        player.play().then(() => {
-          if (!isFullscreen()) requestFullscreen(document.documentElement);
-        }).catch(e => console.warn("Autoplay:", e));
       });
       
       hls.on(Hls.Events.ERROR, (event, data) => {
+        console.error("HLS Error:", data);
         let msg = "❌ Gagal memuat stream.";
         if (data.fatal) {
-          if (data.type === Hls.ErrorTypes.NETWORK_ERROR) msg = "❌ Kesalahan jaringan.";
-          else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) msg = "❌ Format tidak didukung.";
+          if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
+            msg = "❌ Kesalahan jaringan. Periksa URL.";
+          } else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
+            msg = "❌ Format media tidak didukung.";
+          }
         }
         showPlayerError(msg);
         hls.destroy();
       });
+    } else if (player.canPlayType('application/vnd.apple.mpegurl') && url.includes('.m3u8')) {
+      player.src = url;
+      playerLoading.style.display = 'none';
     } else {
       player.src = url;
       playerLoading.style.display = 'none';
-      player.play().then(() => {
-        if (!isFullscreen()) requestFullscreen(document.documentElement);
-      }).catch(e => console.warn("Autoplay:", e));
     }
   }
 
@@ -650,14 +724,20 @@ document.addEventListener("DOMContentLoaded", () => {
   };
   document.getElementById('btn-load-url').onclick = () => {
     const url = playlistUrlInput.value.trim();
-    if (!url) return showError("⚠️ URL tidak boleh kosong!");
-    fetch(url).then(res => res.ok ? res.text() : Promise.reject(new Error(`HTTP ${res.status}`)))
+    if (!url) {
+      showError("⚠️ URL tidak boleh kosong!");
+      return;
+    }
+    fetch(url)
+      .then(res => res.ok ? res.text() : Promise.reject(new Error(`HTTP ${res.status}`)))
       .then(text => {
         const list = parseM3U(text);
-        const filename = url.split('/').pop() || 'playlist.m3u';
+        const filename = url.split('/').pop() || 'remote_playlist.m3u';
         loadPlaylist(list, filename);
       })
-      .catch(err => showError(`❌ Gagal: ${err.message}`));
+      .catch(err => {
+        showError(`❌ Gagal: ${err.message}`);
+      });
   };
   fileInput.onchange = (e) => {
     const file = e.target.files[0];
@@ -682,10 +762,13 @@ document.addEventListener("DOMContentLoaded", () => {
     modalUrlInput.value = '';
     modalFileInput.value = '';
   };
-  closeModal.onclick = () => settingsModal.style.display = 'none';
-  settingsModal.onclick = (e) => { if (e.target === settingsModal) settingsModal.style.display = 'none'; };
+  closeModal.onclick = () => {
+    settingsModal.style.display = 'none';
+  };
+  settingsModal.onclick = (e) => {
+    if (e.target === settingsModal) settingsModal.style.display = 'none';
+  };
 
-  tabBtns = document.querySelectorAll('.tab-btn');
   tabBtns.forEach(btn => {
     btn.onclick = () => {
       tabBtns.forEach(b => b.classList.remove('active'));
@@ -698,6 +781,7 @@ document.addEventListener("DOMContentLoaded", () => {
   applySettingsBtn.onclick = () => {
     const file = modalFileInput.files[0];
     const url = modalUrlInput.value.trim();
+
     if (file) {
       const reader = new FileReader();
       reader.onload = (ev) => {
@@ -707,10 +791,11 @@ document.addEventListener("DOMContentLoaded", () => {
       };
       reader.readAsText(file);
     } else if (url) {
-      fetch(url).then(res => res.ok ? res.text() : Promise.reject(new Error(`HTTP ${res.status}`)))
+      fetch(url)
+        .then(res => res.ok ? res.text() : Promise.reject(new Error(`HTTP ${res.status}`)))
         .then(text => {
           const list = parseM3U(text);
-          const filename = url.split('/').pop() || 'playlist.m3u';
+          const filename = url.split('/').pop() || 'remote_playlist.m3u';
           loadPlaylist(list, filename);
           settingsModal.style.display = 'none';
         })
@@ -726,27 +811,50 @@ document.addEventListener("DOMContentLoaded", () => {
   startupScreen.style.display = 'flex';
 });
 
-// Navigasi remote
 document.addEventListener('keydown', (e) => {
   if (document.getElementById('app').style.display !== 'flex') return;
   
-  const items = Array.from(document.querySelectorAll('.channel-card'));
-  if (items.length === 0) return;
-
-  if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+  if (e.key === 'f' || e.key === 'F') {
     e.preventDefault();
+    const player = document.getElementById('player');
+    if (!isFullscreen()) {
+      requestFullscreen(player);
+    } else {
+      exitFullscreen();
+    }
+    return;
+  }
+
+  if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+    e.preventDefault();
+    const items = Array.from(document.querySelectorAll('.channel-card'));
+    if (items.length === 0) return;
+
     const currentIndex = items.findIndex(el => el.classList.contains('active'));
-    let nextIndex = e.key === 'ArrowRight' ? currentIndex + 1 : currentIndex - 1;
-    nextIndex = ((nextIndex % items.length) + items.length) % items.length;
-    
+    let nextIndex = e.key === 'ArrowDown' ? currentIndex + 1 : currentIndex - 1;
+    nextIndex = Math.max(0, Math.min(items.length - 1, nextIndex));
+
     items.forEach(el => el.classList.remove('active'));
     items[nextIndex].classList.add('active');
-    
-    // Scroll horizontal
-    items[nextIndex].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-    
-    // Mainkan channel
-    playAndFullscreen(channels[nextIndex], nextIndex);
+
+    // SCROLL HANYA DI AREA CHANNEL
+    items[nextIndex].scrollIntoView({
+      block: 'nearest',
+      behavior: 'smooth',
+      inline: 'nearest'
+    });
+  }
+  
+  if (e.key === 'Enter' || e.key === ' ') {
+    e.preventDefault();
+    const active = document.querySelector('.channel-card.active');
+    if (active) {
+      const items = Array.from(document.querySelectorAll('.channel-card'));
+      const index = items.indexOf(active);
+      if (index >= 0) {
+        playChannel(channels[index], index);
+      }
+    }
   }
 });
 </script>
