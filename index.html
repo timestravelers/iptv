@@ -119,7 +119,7 @@
                             <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
                             <span class="text-[10px] font-black text-emerald-500 uppercase tracking-widest">Trending Live</span>
                         </div>
-                        <h1 id="hero-title" class="text-7xl font-black mb-6 tracking-tighter uppercase italic leading-none max-w-4xl text-white">M-TIVI: Huburan Di Mana Saja</h1>
+                        <h1 id="hero-title" class="text-7xl font-black mb-6 tracking-tighter uppercase italic leading-none max-w-4xl text-white">M-TIVI: Hiburan Di Mana Saja</h1>
                         <p class="text-gray-400 max-w-xl mb-10 text-lg font-medium leading-relaxed">Nikmati akses instan ke ribuan saluran TV premium, olahraga langsung, dan film terbaru dalam kualitas kristal.</p>
                         <div class="flex gap-6">
                             <button onclick="switchTab('live')" class="bg-emerald-500 hover:bg-emerald-400 text-black px-10 py-4 rounded-[24px] font-black text-sm transition-all shadow-2xl shadow-emerald-500/30 active:scale-95 uppercase tracking-widest">Mulai Menonton</button>
@@ -374,20 +374,45 @@
             reader.readAsText(file);
         }
 
+        /**
+         * Mengambil playlist dari URL remote menggunakan CORS Proxy.
+         * Browser memblokir permintaan lintas domain (CORS) demi keamanan.
+         * Menggunakan corsproxy.io atau allorigins sebagai penengah untuk mendapatkan data mentah M3U.
+         */
         async function loadFromUrl() {
             const urlInput = document.getElementById('m3uUrlInput');
-            const url = urlInput ? urlInput.value.trim() : '';
-            if (!url) return;
-            showToast("Menyambungkan Server...");
+            let originalUrl = urlInput ? urlInput.value.trim() : '';
+            if (!originalUrl) return;
+
+            showToast("Menyambungkan via Proxy...");
+            
+            // Gunakan corsproxy.io untuk melewati blokir CORS browser
+            const proxiedUrl = `https://corsproxy.io/?${encodeURIComponent(originalUrl)}`;
+            
             try {
-                const response = await fetch(url);
-                if (!response.ok) throw new Error("Gagal mengunduh");
+                const response = await fetch(proxiedUrl);
+                if (!response.ok) throw new Error("Proxy gagal");
                 const data = await response.text();
                 channels = parseM3U(data);
+                if (channels.length === 0) throw new Error("Format M3U tidak valid");
                 saveAndRender();
                 switchTab('live');
+                showToast(`Berhasil memuat ${channels.length} saluran!`);
             } catch (err) {
-                showToast("Gagal menyambung playlist! Periksa URL atau koneksi internet.");
+                console.error("Fetch Error with Proxy:", err);
+                // Fallback kedua menggunakan AllOrigins jika Proxy utama gagal
+                try {
+                    const fallbackUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(originalUrl)}`;
+                    const fbResponse = await fetch(fallbackUrl);
+                    if (!fbResponse.ok) throw new Error("Semua proxy gagal");
+                    const fbData = await fbResponse.text();
+                    channels = parseM3U(fbData);
+                    saveAndRender();
+                    switchTab('live');
+                    showToast("Berhasil memuat via Fallback Proxy!");
+                } catch (innerErr) {
+                    showToast("Gagal memuat playlist! Masalah CORS atau URL tidak aktif.");
+                }
             }
         }
 
