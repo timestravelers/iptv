@@ -1,710 +1,477 @@
-
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>M-TIVI - SMART TV EDITION</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --primary: #10b981;
-            --bg-dark: #050505;
-            --card-bg: #111111;
-        }
-        body {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            background-color: var(--bg-dark);
-            color: white;
-            overflow: hidden;
-        }
-        .sidebar-item:hover { background: rgba(16, 185, 129, 0.1); }
-        .sidebar-item.active { background: var(--primary); color: white; box-shadow: 0 0 25px rgba(16, 185, 129, 0.3); }
-        .channel-card:hover { transform: scale(1.05); z-index: 10; border-color: var(--primary); }
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
-        .player-gradient { background: linear-gradient(0deg, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0) 50%, rgba(0,0,0,0.95) 100%); }
-        .glass { background: rgba(255, 255, 255, 0.02); backdrop-filter: blur(20px); }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .animate-fade { animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
-        .category-scroll::-webkit-scrollbar { display: none; }
-        
-        /* Auto-hide controls */
-        #player-controls {
-            transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .controls-hidden {
-            opacity: 0 !important;
-            cursor: none;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>M-TIVI - SMART TV EDITION</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+  <script src="https://cdn.dashjs.org/latest/dash.all.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #10b981;
+      --bg-dark: #050505;
+      --card-bg: #111111;
+    }
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: var(--bg-dark);
+      color: white;
+      overflow: hidden;
+      height: 100vh;
+      margin: 0;
+    }
+    .sidebar-item:hover { background: rgba(16, 185, 129, 0.1); }
+    .sidebar-item.active { background: var(--primary); color: white; box-shadow: 0 0 25px rgba(16, 185, 129, 0.3); }
+    .channel-card:hover { transform: scale(1.05); z-index: 10; border-color: var(--primary); }
+    .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
+    .player-gradient { background: linear-gradient(0deg, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0) 50%, rgba(0,0,0,0.95) 100%); }
+    .glass { background: rgba(255, 255, 255, 0.02); backdrop-filter: blur(20px); }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    .animate-fade { animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+    .category-scroll::-webkit-scrollbar { display: none; }
+
+    /* Channel grid scrollbar */
+    #channel-grid {
+      scrollbar-width: thin;
+      scrollbar-color: #333 #111;
+    }
+    #channel-grid::-webkit-scrollbar {
+      width: 6px;
+    }
+    #channel-grid::-webkit-scrollbar-track {
+      background: #111;
+    }
+    #channel-grid::-webkit-scrollbar-thumb {
+      background: #333;
+      border-radius: 3px;
+    }
+    #channel-grid::-webkit-scrollbar-thumb:hover {
+      background: var(--primary);
+    }
+  </style>
 </head>
-<body class="h-screen w-screen flex" onmousemove="resetControlTimer()" onclick="resetControlTimer()">
+<body class="flex flex-col">
 
-    <!-- Sidebar Navigation -->
-    <nav class="w-20 lg:w-72 h-full border-r border-white/5 flex flex-col py-8 glass z-50">
-        <div class="px-8 mb-10 flex items-center gap-4">
-            <div class="w-12 h-12 bg-emerald-500 rounded-2xl flex items-center justify-center shadow-2xl shadow-emerald-500/20">
-                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-white"><rect width="20" height="15" x="2" y="7" rx="2" ry="2"/><polyline points="17 2 12 7 7 2"/></svg>
-            </div>
-            <div class="hidden lg:block">
-                <span class="font-extrabold text-2xl tracking-tighter italic block leading-none text-white">M-<span class="text-emerald-500">TIVI</span></span>
-                <span class="text-[9px] font-black uppercase tracking-[0.3em] text-gray-500">PRO Hub v1.1.1</span>
-            </div>
-        </div>
+<!-- SPLASH SCREEN -->
+<div id="startup-screen" class="fixed inset-0 flex flex-col items-center justify-center bg-gray-900 z-50">
+  <div class="text-center animate-fade">
+    <h1 class="text-4xl font-bold text-white mb-6">M-TIVI</h1>
+    <p class="text-green-400 mb-8">SMART TV EDITION</p>
+    <button id="btn-upload" class="px-6 py-3 bg-gray-800 hover:bg-gray-700 rounded-lg text-white mb-3 w-64">📁 Upload M3U</button>
+    <button id="btn-url" class="px-6 py-3 bg-gray-800 hover:bg-gray-700 rounded-lg text-white w-64">🔗 Masukkan URL Playlist</button>
+    <input type="file" id="file-input" accept=".m3u,.m3u8" hidden />
+    <div id="url-input-group" class="mt-4 hidden">
+      <input type="text" id="playlist-url" placeholder="https://contoh.com/playlist.m3u" class="w-64 px-4 py-2 bg-gray-800 text-white rounded mb-2" />
+      <button id="btn-load-url" class="px-4 py-2 bg-green-600 hover:bg-green-500 rounded text-white">Muat</button>
+    </div>
+    <div id="error-message" class="mt-4 text-red-400 min-h-6"></div>
+  </div>
+</div>
 
-        <div class="w-full flex-1 flex flex-col overflow-hidden px-4 space-y-1">
-            <button onclick="switchTab('home')" id="btn-home" class="sidebar-item active w-full flex items-center gap-4 px-5 py-4 rounded-2xl transition-all duration-300 group">
-                <svg class="group-hover:scale-110 transition-transform" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-                <span class="hidden lg:block font-bold text-sm tracking-wide">Beranda</span>
-            </button>
-            <button onclick="switchTab('fav')" id="btn-fav" class="sidebar-item w-full flex items-center gap-4 px-5 py-4 rounded-2xl text-gray-400 transition-all duration-300 group">
-                <svg class="group-hover:scale-110 transition-transform" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
-                <span class="hidden lg:block font-bold text-sm tracking-wide">Favorit</span>
-            </button>
-            
-            <div class="pt-6 pb-2 px-5 hidden lg:block">
-                <span class="text-[10px] font-black text-gray-600 uppercase tracking-widest">Kategori</span>
-            </div>
+<!-- MAIN APP -->
+<div id="app" class="hidden flex flex-col h-full">
+  <!-- Navbar -->
+  <div class="h-14 px-6 flex items-center justify-between glass border-b border-gray-800">
+    <div class="text-xl font-bold text-green-400">M-TIVI</div>
+    <div id="playlist-name" class="text-sm text-gray-400 truncate max-w-xs"></div>
+    <div class="flex items-center gap-3">
+      <input type="text" id="search" placeholder="Cari channel..." class="px-3 py-1 bg-gray-800 rounded text-sm w-48" />
+      <button id="settings-btn" class="text-xl">⚙️</button>
+    </div>
+  </div>
 
-            <div id="category-sidebar" class="flex-1 overflow-y-auto category-scroll space-y-1 custom-scrollbar">
-                <p class="px-5 text-[11px] text-gray-700 italic hidden lg:block">Playlist belum dimuat</p>
-            </div>
+  <!-- Main Content -->
+  <div class="flex flex-1 overflow-hidden">
+    <!-- Sidebar Groups -->
+    <div id="groups-panel" class="w-48 p-3 overflow-y-auto custom-scrollbar bg-gray-900 border-r border-gray-800"></div>
 
-            <div class="pt-4 border-t border-white/5 space-y-1">
-                <button onclick="switchTab('settings')" id="btn-settings" class="sidebar-item w-full flex items-center gap-4 px-5 py-4 rounded-2xl text-gray-400 transition-all duration-300 group">
-                    <svg class="group-hover:rotate-45 transition-transform" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
-                    <span class="hidden lg:block font-bold text-sm tracking-wide">Pengaturan</span>
-                </button>
-                <button onclick="switchTab('about')" id="btn-about" class="sidebar-item w-full flex items-center gap-4 px-5 py-4 rounded-2xl text-gray-400 transition-all duration-300 group">
-                    <svg class="group-hover:scale-110 transition-transform" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
-                    <span class="hidden lg:block font-bold text-sm tracking-wide">Tentang</span>
-                </button>
-            </div>
-        </div>
-    </nav>
+    <!-- Channels + Player -->
+    <div class="flex-1 flex flex-col">
+      <!-- Video Player -->
+      <div id="video-player" class="h-1/2 relative">
+        <video id="player" class="w-full h-full object-contain bg-black"></video>
+        <div id="player-loading" class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-70 text-green-400 hidden">Memuat stream...</div>
+        <div id="player-error" class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-80 text-red-400 text-center p-4 hidden"></div>
+      </div>
 
-    <!-- Main Content -->
-    <main class="flex-1 flex flex-col relative overflow-hidden bg-[#050505]">
-        
-        <!-- Header -->
-        <div class="h-24 w-full flex items-center justify-between px-12 z-20">
-            <div class="relative w-96 group">
-                <svg class="absolute left-5 top-1/2 -translate-y-1/2 text-gray-500 w-4 h-4 group-focus-within:text-emerald-500 transition-colors" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-                <input type="text" id="searchInput" oninput="searchChannels()" placeholder="Cari saluran..." class="w-full bg-white/5 border border-white/5 rounded-2xl py-3.5 pl-14 pr-6 text-xs font-bold focus:outline-none focus:border-emerald-500/50 transition-all placeholder:text-gray-600">
-            </div>
-            
-            <div class="flex items-center gap-10">
-                <div class="text-right">
-                    <p id="clock" class="text-2xl font-black tracking-tighter leading-none">00:00</p>
-                    <p id="date" class="text-[10px] text-gray-500 uppercase font-black tracking-widest mt-1">MEMUAT...</p>
-                </div>
-                <div class="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center overflow-hidden shadow-xl">
-                    <img src="https://api.dicebear.com/7.x/pixel-art/svg?seed=ultra" alt="User">
-                </div>
-            </div>
-        </div>
+      <!-- Channel Grid -->
+      <div id="channel-grid" class="flex-1 p-4 overflow-y-auto grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 custom-scrollbar"></div>
+    </div>
+  </div>
 
-        <!-- Content Screens -->
-        <div class="flex-1 overflow-y-auto custom-scrollbar px-12 pb-12" id="screen-container">
-            
-            <!-- Home Screen -->
-            <div id="screen-home" class="space-y-16 py-4 animate-fade">
-                <div class="relative h-[480px] w-full rounded-[48px] overflow-hidden group shadow-[0_50px_100px_rgba(0,0,0,0.8)] border border-white/5">
-                    <img id="hero-img" src="https://images.unsplash.com/photo-1593784991095-a205069470b6?q=80&w=2070&auto=format&fit=crop" class="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110 brightness-50">
-                    <div class="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent flex flex-col justify-end p-16">
-                        <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 mb-6 w-fit">
-                            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                            <span class="text-[10px] font-black text-emerald-500 uppercase tracking-widest">Trending Live</span>
-                        </div>
-                        <h1 id="hero-title" class="text-7xl font-black mb-6 tracking-tighter uppercase italic leading-none max-w-4xl text-white">M-TIVI: Hiburan Di Mana Saja</h1>
-                        <p class="text-gray-400 max-w-xl mb-10 text-lg font-medium leading-relaxed">Nikmati akses instan ke ribuan saluran TV premium, olahraga langsung, dan film terbaru dalam kualitas kristal.</p>
-                        <div class="flex gap-6">
-                            <button onclick="switchTab('live')" class="bg-emerald-500 hover:bg-emerald-400 text-black px-10 py-4 rounded-[24px] font-black text-sm transition-all shadow-2xl shadow-emerald-500/30 active:scale-95 uppercase tracking-widest">Mulai Menonton</button>
-                            <button onclick="document.getElementById('m3uUpload').click()" class="bg-white/5 hover:bg-white/10 backdrop-blur-xl px-10 py-4 rounded-[24px] font-bold text-sm transition-all active:scale-95 uppercase tracking-widest border border-white/10">Impor Playlist</button>
-                        </div>
-                    </div>
-                </div>
+  <!-- Footer -->
+  <div class="h-10 px-6 flex items-center justify-center text-xs text-gray-500 bg-black bg-opacity-50 border-t border-gray-800">
+    💖 Creativityright by tHoRicQ | Dukung Pengembangan
+  </div>
+</div>
 
-                <section id="recents-section" class="hidden">
-                    <h2 class="text-2xl font-black mb-8 uppercase tracking-tighter flex items-center gap-4 italic">
-                        <span class="w-2 h-8 bg-emerald-500 rounded-full"></span> Terakhir Ditonton
-                    </h2>
-                    <div id="recents-list" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-8"></div>
-                </section>
-            </div>
-
-            <!-- Category/Live Screen -->
-            <div id="screen-live" class="hidden py-4 animate-fade">
-                <div class="flex items-center justify-between mb-12">
-                    <div class="flex items-baseline gap-4">
-                        <h2 id="live-title" class="text-4xl font-black tracking-tighter uppercase italic">Semua Saluran</h2>
-                        <span id="channel-count" class="text-sm font-black text-emerald-500/50">0 Saluran</span>
-                    </div>
-                    <div class="flex gap-4">
-                        <button onclick="sortAlphabetically()" class="px-4 py-2 rounded-xl border border-white/5 text-[10px] font-bold uppercase tracking-widest hover:bg-white/5">A-Z</button>
-                    </div>
-                </div>
-                <div id="channels-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 2xl:grid-cols-6 gap-8">
-                    <!-- Cards injected -->
-                </div>
-                <div id="no-channels-msg" class="hidden py-20 text-center">
-                    <p class="text-gray-500 font-bold italic">Tidak ada saluran ditemukan untuk kategori ini.</p>
-                </div>
-            </div>
-
-            <!-- Favorites Screen -->
-            <div id="screen-fav" class="hidden py-4 animate-fade">
-                <h2 class="text-4xl font-black tracking-tighter uppercase italic mb-12">Favorit Anda</h2>
-                <div id="fav-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 2xl:grid-cols-6 gap-8"></div>
-            </div>
-
-            <!-- Settings Screen -->
-            <div id="screen-settings" class="hidden py-4 animate-fade max-w-3xl mx-auto space-y-12">
-                <div class="text-center">
-                    <h2 class="text-4xl font-black tracking-tighter uppercase italic mb-2">Konfigurasi</h2>
-                    <p class="text-gray-500 text-sm">Atur playlist dan preferensi player Anda</p>
-                </div>
-                
-                <div class="glass p-10 rounded-[48px] border border-white/10 space-y-10 shadow-2xl">
-                    <div class="space-y-4">
-                        <label class="text-[10px] font-black uppercase text-gray-500 tracking-[0.2em] ml-2 block">Playlist M3U URL</label>
-                        <div class="flex gap-4">
-                            <input type="text" id="m3uUrlInput" placeholder="https://domain.com/playlist.m3u" class="flex-1 bg-black border border-white/10 rounded-2xl px-6 py-4 text-sm font-bold focus:outline-none focus:border-emerald-500 transition-all">
-                            <button onclick="loadFromUrl()" class="bg-emerald-500 text-black px-10 rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-emerald-500/20 hover:brightness-110">Hubungkan</button>
-                        </div>
-                    </div>
-                    
-                    <div class="flex items-center justify-between p-8 rounded-3xl bg-white/5 border border-white/5">
-                        <div class="flex items-center gap-6">
-                            <div class="w-14 h-14 bg-white/5 rounded-2xl flex items-center justify-center"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-400"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg></div>
-                            <div>
-                                <p class="font-bold text-lg">Impor Berkas Lokal</p>
-                                <p class="text-xs text-gray-500 font-medium">Muat file M3U langsung dari perangkat</p>
-                            </div>
-                        </div>
-                        <input type="file" id="m3uUpload" accept=".m3u,.m3u8" class="hidden" onchange="loadFromFile(event)">
-                        <button onclick="document.getElementById('m3uUpload').click()" class="bg-white px-8 py-3 rounded-xl text-black font-black text-[10px] uppercase tracking-widest hover:brightness-90 transition-all">Pilih Berkas</button>
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-6 pt-6">
-                        <button onclick="clearAllData()" class="bg-red-500/10 border border-red-500/20 text-red-400 py-4 rounded-3xl font-black text-[10px] uppercase tracking-[0.2em] hover:bg-red-500/20 transition-all">Hapus Playlist</button>
-                        <button onclick="window.location.reload()" class="bg-blue-500/10 border border-blue-500/20 text-blue-400 py-4 rounded-3xl font-black text-[10px] uppercase tracking-[0.2em] hover:bg-blue-500/20 transition-all">Muat Ulang App</button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- About Screen -->
-            <div id="screen-about" class="hidden py-4 animate-fade max-w-2xl mx-auto">
-                <div class="text-center mb-12">
-                    <div class="w-24 h-24 bg-emerald-500 rounded-[32px] flex items-center justify-center mx-auto shadow-2xl shadow-emerald-500/30 mb-6">
-                         <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-white"><rect width="20" height="15" x="2" y="7" rx="2" ry="2"/><polyline points="17 2 12 7 7 2"/></svg>
-                    </div>
-                    <h2 class="text-5xl font-black tracking-tighter uppercase italic mb-2">M-<span class="text-emerald-500">TIVI</span></h2>
-                    <p class="text-gray-500 text-xs font-black uppercase tracking-[0.4em]">Smart Multimedia Engine</p>
-                </div>
-
-                <div class="glass p-12 rounded-[56px] border border-white/10 space-y-8 shadow-2xl text-center">
-                    <div class="space-y-4">
-                        <p class="text-xl font-bold">Tentang Aplikasi</p>
-                        <p class="text-sm text-gray-400 leading-relaxed italic">M-TIVI adalah pemutar IPTV modern yang dioptimalkan untuk performa tinggi dan estetika sinematik. Dirancang untuk memberikan pengalaman menonton layaknya Smart TV premium di perangkat Anda.</p>
-                    </div>
-                    
-                    <div class="py-6 border-y border-white/5 space-y-4">
-                        <div class="flex justify-between items-center px-4">
-                            <span class="text-[10px] font-black text-gray-500 uppercase tracking-widest">Versi Aplikasi</span>
-                            <span class="text-sm font-bold text-emerald-500">1.1.1</span>
-                        </div>
-                        <div class="flex justify-between items-center px-4">
-                            <span class="text-[10px] font-black text-gray-500 uppercase tracking-widest">Lisensi</span>
-                            <span class="text-sm font-bold">PRO Edition</span>
-                        </div>
-                    </div>
-
-                    <div class="pt-4">
-                        <p class="text-[11px] font-black uppercase tracking-[0.3em] text-emerald-500 mb-2 italic">Creativityright (c) 2026 - ThORiCkQ</p>
-                        <p class="text-[8px] text-gray-600 font-bold uppercase tracking-widest leading-none">All Rights Reserved</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </main>
-
-    <!-- Fullscreen Player Overlay -->
-    <div id="player-overlay" class="fixed inset-0 bg-black z-[100] hidden flex flex-col items-center justify-center group overflow-hidden" onmousemove="resetControlTimer()">
-        <video id="videoPlayer" class="w-full h-full object-contain" autoplay crossorigin></video>
-        
-        <!-- Controls UI -->
-        <div id="player-controls" class="absolute inset-0 player-gradient flex flex-col justify-between p-16">
-            <div class="flex items-center justify-between">
-                <div class="flex items-center gap-8">
-                    <button onclick="closePlayer()" class="w-14 h-14 rounded-full glass flex items-center justify-center hover:bg-white/20 transition-all active:scale-90 border border-white/10">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
-                    </button>
-                    <div>
-                        <h3 id="currentChannelName" class="text-4xl font-black tracking-tighter italic uppercase leading-none mb-1">MEMUAT...</h3>
-                        <p id="currentCategory" class="text-[10px] font-black text-emerald-500 uppercase tracking-[0.3em]">LIVE STREAMING</p>
-                    </div>
-                </div>
-                <div class="flex gap-4">
-                    <button onclick="togglePiP()" class="w-14 h-14 rounded-full glass flex items-center justify-center border border-white/10 hover:bg-emerald-500 transition-all"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><rect width="7" height="7" x="14" y="14" rx="1"/></svg></button>
-                    <button onclick="toggleFullscreen()" class="w-14 h-14 rounded-full glass flex items-center justify-center border border-white/10 hover:bg-emerald-500 transition-all"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21 21-6-6m6 6v-4.8m0 4.8h-4.8M3 16.2V21m0 0h4.8M3 21l6-6M21 7.8V3m0 0h-4.8M21 3l-6 6M3 7.8V3m0 0h4.8M3 3l6 6"/></svg></button>
-                </div>
-            </div>
-
-            <div class="flex flex-col items-center gap-10">
-                <button id="playPauseBtn" onclick="togglePlay()" class="w-28 h-28 rounded-full bg-emerald-500 text-black flex items-center justify-center hover:scale-110 active:scale-90 transition-all shadow-[0_0_80px_rgba(16,185,129,0.4)]">
-                    <svg id="playIcon" class="hidden" xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-                    <svg id="pauseIcon" xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg>
-                </button>
-                
-                <div class="w-full flex items-center gap-8 glass p-6 px-12 rounded-[32px] border border-white/10 shadow-2xl">
-                    <div class="flex items-center gap-2">
-                        <span class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
-                        <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest">LIVE</span>
-                    </div>
-                    <div class="flex-1 h-2 bg-white/5 rounded-full overflow-hidden">
-                        <div class="h-full bg-emerald-500 w-[100%] shadow-[0_0_20px_rgba(16,185,129,0.5)]"></div>
-                    </div>
-                    <span id="player-time" class="text-xs font-black font-mono tracking-widest">00:00:00</span>
-                </div>
-            </div>
-        </div>
+<!-- SETTINGS MODAL -->
+<div id="settings-modal" class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
+  <div class="bg-gray-900 rounded-xl w-11/12 max-w-md p-6">
+    <div class="flex justify-between items-center mb-4">
+      <h2 class="text-xl font-semibold text-white">Pengaturan</h2>
+      <button class="close-modal text-gray-400 text-2xl">&times;</button>
     </div>
 
-    <!-- Notification -->
-    <div id="toast" class="fixed bottom-12 left-1/2 -translate-x-1/2 z-[200] px-8 py-4 glass rounded-3xl border border-white/10 text-[10px] font-black uppercase tracking-[0.3em] hidden animate-fade shadow-[0_40px_80px_rgba(0,0,0,0.6)] ring-1 ring-white/10 text-center min-w-[320px]">
-        Status Sistem
+    <!-- Tabs -->
+    <div class="flex border-b border-gray-700 mb-4">
+      <button class="tab-btn px-4 py-2 text-sm font-medium text-green-400 border-b-2 border-green-400" data-tab="settings">Pengaturan</button>
+      <button class="tab-btn px-4 py-2 text-sm font-medium text-gray-400" data-tab="about">Tentang Aplikasi</button>
     </div>
 
-    <script>
-        let channels = [];
-        let categories = [];
-        let favorites = JSON.parse(localStorage.getItem('fav_v3')) || [];
-        let currentHls = null;
-        let currentCategory = 'all';
-        let controlTimer = null;
+    <!-- Tab Content -->
+    <div id="tab-settings" class="tab-content">
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm text-gray-300 mb-1">Upload File M3U Baru</label>
+          <input type="file" id="modal-file-input" accept=".m3u,.m3u8" class="w-full px-3 py-2 bg-gray-800 text-white rounded" />
+        </div>
+        <div>
+          <label class="block text-sm text-gray-300 mb-1">URL Playlist Baru</label>
+          <input type="text" id="modal-url-input" placeholder="https://contoh.com/playlist.m3u" class="w-full px-3 py-2 bg-gray-800 text-white rounded" />
+        </div>
+        <button id="apply-settings" class="w-full py-2 bg-green-600 hover:bg-green-500 rounded text-white">Terapkan Perubahan</button>
+      </div>
+    </div>
 
-        // Timer Real-time
-        function updateUI() {
-            const now = new Date();
-            const clockEl = document.getElementById('clock');
-            const dateEl = document.getElementById('date');
-            if (clockEl) clockEl.innerText = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false });
-            if (dateEl) dateEl.innerText = now.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'short' }).toUpperCase();
-            
-            const playerTime = document.getElementById('player-time');
-            if (playerTime) playerTime.innerText = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-        }
-        setInterval(updateUI, 1000);
-        updateUI();
+    <div id="tab-about" class="tab-content hidden">
+      <div class="text-sm text-gray-300 space-y-3">
+        <h3 class="font-bold text-green-400">Tentang Aplikasi</h3>
+        <p><strong>Nama:</strong> M-TIVI - SMART TV EDITION</p>
+        <p><strong>Versi:</strong> 1.0.0</p>
+        <p><strong>Deskripsi:</strong> IPTV Player universal untuk semua format streaming (HLS, DASH, MP4, YouTube).</p>
+        <p><strong>Creativityright by tHoRicQ</strong></p>
+        <p class="text-xs text-gray-500 mt-4">
+          Aplikasi ini dibuat untuk tujuan edukasi dan penggunaan pribadi.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
 
-        // Control Auto-hide logic
-        function resetControlTimer() {
-            const controls = document.getElementById('player-controls');
-            if (!controls) return;
-            
-            controls.classList.remove('controls-hidden');
-            document.body.style.cursor = 'default';
-            
-            clearTimeout(controlTimer);
-            
-            // Auto-hide hanya jika player sedang tampil
-            if (!document.getElementById('player-overlay').classList.contains('hidden')) {
-                controlTimer = setTimeout(() => {
-                    controls.classList.add('controls-hidden');
-                    document.body.style.cursor = 'none';
-                }, 3000); // Sembunyikan setelah 3 detik tidak ada aktivitas
-            }
-        }
+<script>
+let channels = [];
+let groups = [];
+let currentChannelIndex = -1;
+let currentPlaylistName = "Playlist";
 
-        // M3U Engine
-        function parseM3U(data) {
-            const lines = data.split('\n');
-            const result = [];
-            const catSet = new Set();
-            let currentChannel = null;
+// === DOM Elements ===
+const startupScreen = document.getElementById('startup-screen');
+const app = document.getElementById('app');
+const fileInput = document.getElementById('file-input');
+const playlistUrlInput = document.getElementById('playlist-url');
+const playlistNameEl = document.getElementById('playlist-name');
+const searchInput = document.getElementById('search');
+const groupsPanel = document.getElementById('groups-panel');
+const channelGrid = document.getElementById('channel-grid');
+const player = document.getElementById('player');
+const playerLoading = document.getElementById('player-loading');
+const playerError = document.getElementById('player-error');
+const errorMessage = document.getElementById('error-message');
+const settingsModal = document.getElementById('settings-modal');
+const settingsBtn = document.getElementById('settings-btn');
+const closeModal = document.querySelector('.close-modal');
+const modalFileInput = document.getElementById('modal-file-input');
+const modalUrlInput = document.getElementById('modal-url-input');
+const applySettingsBtn = document.getElementById('apply-settings');
+const tabBtns = document.querySelectorAll('.tab-btn');
 
-            for (let i = 0; i < lines.length; i++) {
-                let line = lines[i].trim();
-                if (!line) continue;
+// === Utility Functions ===
+function showError(msg) {
+  errorMessage.textContent = msg;
+  setTimeout(() => { errorMessage.textContent = ""; }, 5000);
+}
 
-                if (line.startsWith('#EXTINF')) {
-                    const infoLine = line;
-                    const commaIndex = line.lastIndexOf(',');
-                    const name = line.substring(commaIndex + 1).trim();
+function showPlayerError(msg) {
+  playerLoading.classList.add('hidden');
+  playerError.textContent = msg;
+  playerError.classList.remove('hidden');
+  player.classList.add('hidden');
+}
 
-                    const logoMatch = infoLine.match(/tvg-logo="([^"]+)"/i);
-                    const groupMatch = infoLine.match(/group-title="([^"]+)"/i);
-                    
-                    const group = groupMatch ? groupMatch[1] : 'Lainnya';
-                    catSet.add(group);
+function hidePlayerError() {
+  playerError.classList.add('hidden');
+  player.classList.remove('hidden');
+}
 
-                    currentChannel = {
-                        name: name || 'Saluran Tanpa Nama',
-                        logo: logoMatch ? logoMatch[1] : `https://ui-avatars.com/api/?name=${encodeURIComponent(name || 'TV')}&background=111&color=555&bold=true`,
-                        group: group,
-                        id: Math.random().toString(36).substr(2, 9)
-                    };
-                } else if (line.startsWith('http') || (line.length > 5 && !line.startsWith('#'))) {
-                    if (currentChannel) {
-                        currentChannel.url = line;
-                        result.push(currentChannel);
-                        currentChannel = null;
-                    }
-                }
-            }
+function parseM3U(text) {
+  const lines = text.split('\n');
+  const list = [];
+  let current = null;
+  for (let line of lines) {
+    line = line.trim();
+    if (line.startsWith('#EXTINF:')) {
+      const logoMatch = line.match(/tvg-logo=["']?([^"'>]*)/i);
+      const groupMatch = line.match(/group-title=["']?([^"'>]*)/i);
+      const name = line.split(/,(.+)/).pop()?.trim() || 'Channel';
+      current = {
+        name: name,
+        url: '',
+        logo: logoMatch ? logoMatch[1] : '',
+        group: groupMatch ? groupMatch[1] : 'Umum'
+      };
+    } else if (line && !line.startsWith('#') && current) {
+      current.url = line;
+      list.push(current);
+      current = null;
+    }
+  }
+  return list;
+}
 
-            categories = Array.from(catSet).sort();
-            return result;
-        }
+function loadPlaylist(list, name) {
+  if (list.length === 0) {
+    showError("❌ Tidak ada channel valid.");
+    return;
+  }
+  channels = list;
+  currentPlaylistName = name;
+  const groupSet = new Set(list.map(c => c.group));
+  groups = Array.from(groupSet).sort();
+  startupScreen.classList.add('hidden');
+  app.classList.remove('hidden');
+  playlistNameEl.textContent = name;
+  renderGroups();
+  renderChannels(list);
+  cleanupPlayer();
+  hidePlayerError();
+}
 
-        async function loadFromFile(e) {
-            const file = e.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                showToast("Memparsing Data...");
-                channels = parseM3U(event.target.result);
-                saveAndRender();
-                switchTab('live');
-            };
-            reader.readAsText(file);
-        }
+function renderGroups() {
+  groupsPanel.innerHTML = '';
+  groups.forEach(group => {
+    const el = document.createElement('div');
+    el.className = 'sidebar-item px-3 py-2 rounded cursor-pointer text-sm mb-1';
+    el.textContent = group;
+    el.onclick = () => {
+      document.querySelectorAll('.sidebar-item').forEach(g => g.classList.remove('active'));
+      el.classList.add('active');
+      const filtered = channels.filter(c => c.group === group);
+      renderChannels(filtered);
+    };
+    groupsPanel.appendChild(el);
+  });
+  if (groupsPanel.firstChild) groupsPanel.firstChild.classList.add('active');
+}
 
-        /**
-         * Mengambil playlist dari URL remote menggunakan CORS Proxy.
-         * Browser memblokir permintaan lintas domain (CORS) demi keamanan.
-         * Menggunakan corsproxy.io atau allorigins sebagai penengah untuk mendapatkan data mentah M3U.
-         */
-        async function loadFromUrl() {
-            const urlInput = document.getElementById('m3uUrlInput');
-            let originalUrl = urlInput ? urlInput.value.trim() : '';
-            if (!originalUrl) return;
+function renderChannels(list) {
+  channelGrid.innerHTML = '';
+  if (list.length === 0) {
+    channelGrid.innerHTML = '<div class="col-span-full text-center text-gray-500 py-10">Tidak ada channel.</div>';
+    return;
+  }
+  list.forEach((ch, index) => {
+    const el = document.createElement('div');
+    el.className = 'channel-card bg-gray-800 rounded-lg p-3 flex items-center gap-3 cursor-pointer border border-transparent transition-all duration-200';
+    if (index === currentChannelIndex) el.classList.add('border-green-500');
+    el.innerHTML = `
+      ${ch.logo ? `<img src="${ch.logo}" onerror="this.style.display='none'" class="w-10 h-10 rounded object-cover" />` : ''}
+      <span class="text-sm truncate">${ch.name}</span>
+    `;
+    el.onclick = () => playChannel(ch, index);
+    channelGrid.appendChild(el);
+  });
+}
 
-            showToast("Menyambungkan via Proxy...");
-            
-            // Gunakan corsproxy.io untuk melewati blokir CORS browser
-            const proxiedUrl = `https://corsproxy.io/?${encodeURIComponent(originalUrl)}`;
-            
-            try {
-                const response = await fetch(proxiedUrl);
-                if (!response.ok) throw new Error("Proxy gagal");
-                const data = await response.text();
-                channels = parseM3U(data);
-                if (channels.length === 0) throw new Error("Format M3U tidak valid");
-                saveAndRender();
-                switchTab('live');
-                showToast(`Berhasil memuat ${channels.length} saluran!`);
-            } catch (err) {
-                console.error("Fetch Error with Proxy:", err);
-                // Fallback kedua menggunakan AllOrigins jika Proxy utama gagal
-                try {
-                    const fallbackUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(originalUrl)}`;
-                    const fbResponse = await fetch(fallbackUrl);
-                    if (!fbResponse.ok) throw new Error("Semua proxy gagal");
-                    const fbData = await fbResponse.text();
-                    channels = parseM3U(fbData);
-                    saveAndRender();
-                    switchTab('live');
-                    showToast("Berhasil memuat via Fallback Proxy!");
-                } catch (innerErr) {
-                    showToast("Gagal memuat playlist! Masalah CORS atau URL tidak aktif.");
-                }
-            }
-        }
+function cleanupPlayer() {
+  if (player.hls) { player.hls.destroy(); player.hls = null; }
+  if (player.dash) { player.dash.reset(); player.dash = null; }
+  player.innerHTML = ''; player.src = '';
+}
 
-        function saveAndRender() {
-            localStorage.setItem('ch_v3', JSON.stringify(channels));
-            localStorage.setItem('cat_v3', JSON.stringify(categories));
-            renderCategories();
-            filterCategory(currentCategory);
-            renderFavorites();
-            const countEl = document.getElementById('channel-count');
-            if (countEl) countEl.innerText = `${channels.length} Saluran`;
-        }
+// === FULLSCREEN & AUTO PLAY ===
+function requestFullscreen(element) {
+  if (element.requestFullscreen) element.requestFullscreen();
+  else if (element.webkitRequestFullscreen) element.webkitRequestFullscreen();
+  else if (element.msRequestFullscreen) element.msRequestFullscreen();
+}
 
-        function renderCategories() {
-            const container = document.getElementById('category-sidebar');
-            if (!container) return;
-            container.innerHTML = '';
-            
-            const allBtn = createCatBtn('Semua', 'all');
-            container.appendChild(allBtn);
+function playChannel(channel, index) {
+  currentChannelIndex = index;
+  document.querySelectorAll('.channel-card').forEach((el, i) => {
+    el.classList.toggle('border-green-500', i === index);
+  });
 
-            if (categories.length === 0) {
-                const p = document.createElement('p');
-                p.className = "px-5 text-[11px] text-gray-700 italic hidden lg:block";
-                p.innerText = "Playlist belum dimuat";
-                container.appendChild(p);
-                return;
-            }
+  cleanupPlayer();
+  hidePlayerError();
+  playerLoading.classList.remove('hidden');
 
-            categories.forEach(cat => {
-                container.appendChild(createCatBtn(cat, cat));
-            });
-        }
+  // Masuk fullscreen otomatis
+  requestFullscreen(player);
 
-        function createCatBtn(label, value) {
-            const btn = document.createElement('button');
-            btn.id = `cat-${value}`;
-            const isActive = currentCategory === value;
-            btn.className = `w-full flex items-center gap-4 px-5 py-3 rounded-xl transition-all duration-300 text-gray-500 hover:text-white hover:bg-white/5 text-left group ${isActive ? 'text-emerald-500 bg-emerald-500/5' : ''}`;
-            btn.innerHTML = `
-                <div class="w-1.5 h-1.5 rounded-full ${isActive ? 'bg-emerald-500' : 'bg-gray-800'} group-hover:bg-emerald-500 transition-colors"></div>
-                <span class="hidden lg:block font-bold text-[11px] uppercase tracking-wider truncate">${label}</span>
-            `;
-            btn.onclick = () => filterCategory(value);
-            return btn;
-        }
+  const url = channel.url.trim();
+  if (url.includes('youtube.com') || url.includes('youtu.be')) {
+    playYouTube(url);
+  } else if (url.endsWith('.m3u8')) {
+    playHLS(url);
+  } else if (url.endsWith('.mpd')) {
+    playDASH(url);
+  } else if (url.match(/\.(mp4|webm|ogg)$/i)) {
+    playDirect(url);
+  } else {
+    playHLS(url, () => playDirect(url));
+  }
+}
 
-        function filterCategory(cat) {
-            currentCategory = cat;
-            const titleEl = document.getElementById('live-title');
-            if (titleEl) titleEl.innerText = cat === 'all' ? 'Semua Saluran' : cat;
-            
-            const filtered = cat === 'all' ? channels : channels.filter(c => c.group === cat);
-            renderChannels(filtered);
-            renderCategories();
-        }
+// === PLAYER LOGIC ===
+function playYouTube(url) {
+  try {
+    let videoId;
+    if (url.includes('youtu.be/')) videoId = url.split('youtu.be/')[1].split('?')[0];
+    else videoId = url.split('v=')[1]?.split('&')[0];
+    if (!videoId) throw new Error("Invalid YouTube URL");
+    
+    const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&controls=1`;
+    player.style.display = 'none';
+    playerLoading.classList.add('hidden');
+    
+    const iframe = document.createElement('iframe');
+    iframe.src = embedUrl;
+    iframe.style.width = '100%'; iframe.style.height = '100%'; iframe.style.border = 'none';
+    iframe.allow = 'fullscreen; autoplay';
+    
+    const container = document.getElementById('video-player');
+    container.innerHTML = '';
+    container.appendChild(iframe);
+  } catch (e) {
+    showPlayerError("❌ Gagal memuat YouTube.");
+  }
+}
 
-        function renderChannels(list) {
-            const grid = document.getElementById('channels-grid');
-            const noMsg = document.getElementById('no-channels-msg');
-            if (!grid) return;
-            grid.innerHTML = '';
-            
-            if (list.length === 0) {
-                if (noMsg) noMsg.classList.remove('hidden');
-            } else {
-                if (noMsg) noMsg.classList.add('hidden');
-                list.forEach(ch => grid.appendChild(createCard(ch)));
-            }
-            const countEl = document.getElementById('channel-count');
-            if (countEl) countEl.innerText = `${list.length} Saluran`;
-        }
+function playHLS(url, fallback = null) {
+  if (Hls.isSupported()) {
+    const hls = new Hls({ enableWorker: false, lowLatencyMode: false });
+    player.hls = hls;
+    hls.loadSource(url);
+    hls.attachMedia(player);
+    hls.on(Hls.Events.MANIFEST_PARSED, () => { playerLoading.classList.add('hidden'); });
+    hls.on(Hls.Events.ERROR, (event, data) => {
+      if (data.fatal) {
+        hls.destroy();
+        if (fallback) fallback();
+        else showPlayerError("❌ Gagal memuat HLS.");
+      }
+    });
+  } else if (player.canPlayType('application/vnd.apple.mpegurl')) {
+    player.src = url;
+    player.onloadstart = () => { playerLoading.classList.add('hidden'); };
+    player.onerror = () => { if (fallback) fallback(); else showPlayerError("❌ Gagal memuat HLS."); };
+  } else {
+    if (fallback) fallback();
+    else showPlayerError("❌ HLS tidak didukung.");
+  }
+}
 
-        function createCard(ch) {
-            const isFav = favorites.includes(ch.id);
-            const card = document.createElement('div');
-            card.className = 'channel-card relative bg-white/5 border border-white/5 rounded-[32px] p-5 cursor-pointer transition-all duration-500 flex flex-col items-center gap-5 group hover:shadow-[0_20px_40px_rgba(0,0,0,0.4)]';
-            card.innerHTML = `
-                <div class="relative w-full aspect-square rounded-[24px] overflow-hidden bg-black/40 border border-white/5">
-                    <img src="${ch.logo}" class="w-full h-full object-contain p-6 transition-all duration-700 group-hover:scale-110" loading="lazy" onerror="this.src='https://ui-avatars.com/api/?name=TV&background=111&color=555'">
-                    <div class="absolute inset-0 bg-emerald-500/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                    <button onclick="toggleFav(event, '${ch.id}')" class="absolute top-4 right-4 w-9 h-9 rounded-full glass flex items-center justify-center z-20 ${isFav ? 'text-red-500 bg-red-500/10 border-red-500/20' : 'text-white/20 hover:text-white border-white/10'} border transition-all">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="${isFav ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2.5"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
-                    </button>
-                </div>
-                <div class="w-full text-center px-2 pb-1">
-                    <p class="text-[11px] font-black truncate uppercase tracking-tighter text-gray-200 group-hover:text-emerald-400 transition-colors">${ch.name}</p>
-                    <p class="text-[8px] text-gray-600 uppercase font-black tracking-[0.2em] mt-2 group-hover:text-gray-400 transition-colors">${ch.group}</p>
-                </div>
-            `;
-            card.onclick = (e) => { if(!e.target.closest('button')) playChannel(ch); };
-            return card;
-        }
+function playDASH(url) {
+  try {
+    const dash = dashjs.MediaPlayer().create();
+    player.dash = dash;
+    dash.initialize(player, url, true);
+    dash.on('error', () => { showPlayerError("❌ Gagal memuat DASH."); });
+    playerLoading.classList.add('hidden');
+  } catch (e) {
+    showPlayerError("❌ DASH tidak didukung.");
+  }
+}
 
-        function playChannel(ch) {
-            const overlay = document.getElementById('player-overlay');
-            const video = document.getElementById('videoPlayer');
-            const nameEl = document.getElementById('currentChannelName');
-            const catEl = document.getElementById('currentCategory');
-            if (nameEl) nameEl.innerText = ch.name;
-            if (catEl) catEl.innerText = ch.group;
-            overlay.classList.remove('hidden');
-            
-            if (currentHls) currentHls.destroy();
+function playDirect(url) {
+  player.src = url;
+  player.onloadstart = () => { playerLoading.classList.add('hidden'); };
+  player.onerror = () => { showPlayerError("❌ Gagal memuat video langsung."); };
+}
 
-            video.pause();
-            video.removeAttribute('src');
-            video.load();
+// === EVENT LISTENERS ===
+document.getElementById('btn-upload').onclick = () => fileInput.click();
+document.getElementById('btn-url').onclick = () => {
+  document.getElementById('url-input-group').classList.remove('hidden');
+};
+document.getElementById('btn-load-url').onclick = () => {
+  const url = playlistUrlInput.value.trim();
+  if (!url) { showError("⚠️ URL tidak boleh kosong!"); return; }
+  fetch(url)
+    .then(res => res.ok ? res.text() : Promise.reject(new Error(`HTTP ${res.status}`)))
+    .then(text => {
+      const list = parseM3U(text);
+      const filename = url.split('/').pop() || 'remote_playlist.m3u';
+      loadPlaylist(list, filename);
+    })
+    .catch(err => { showError(`❌ Gagal: ${err.message}`); });
+};
+fileInput.onchange = (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    const list = parseM3U(ev.target.result);
+    loadPlaylist(list, file.name);
+  };
+  reader.readAsText(file);
+};
 
-            const handlePlaybackError = () => {
-                showToast("Gagal memutar siaran. Saluran tidak tersedia atau server sibuk. Silakan ganti saluran lain.");
-            };
+searchInput.oninput = (e) => {
+  const q = e.target.value.toLowerCase();
+  const filtered = channels.filter(c => c.name.toLowerCase().includes(q));
+  renderChannels(filtered);
+};
 
-            video.onerror = handlePlaybackError;
+// Modal
+settingsBtn.onclick = () => {
+  settingsModal.classList.remove('hidden');
+  modalUrlInput.value = '';
+  modalFileInput.value = '';
+};
+closeModal.onclick = () => { settingsModal.classList.add('hidden'); };
+settingsModal.onclick = (e) => { if (e.target === settingsModal) settingsModal.classList.add('hidden'); };
 
-            if (Hls.isSupported()) {
-                currentHls = new Hls({
-                    manifestLoadingMaxRetry: 5,
-                    levelLoadingMaxRetry: 5,
-                    enableWorker: true
-                });
-                currentHls.loadSource(ch.url);
-                currentHls.attachMedia(video);
-                currentHls.on(Hls.Events.MANIFEST_PARSED, () => {
-                    video.play().catch(handlePlaybackError);
-                });
-                currentHls.on(Hls.Events.ERROR, (event, data) => {
-                    if (data.fatal) {
-                        switch (data.type) {
-                            case Hls.ErrorTypes.NETWORK_ERROR:
-                                currentHls.startLoad();
-                                break;
-                            case Hls.ErrorTypes.MEDIA_ERROR:
-                                currentHls.recoverMediaError();
-                                break;
-                            default:
-                                handlePlaybackError();
-                                currentHls.destroy();
-                                break;
-                        }
-                    }
-                });
-            } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-                video.src = ch.url;
-                video.addEventListener('loadedmetadata', function() {
-                    video.play().catch(handlePlaybackError);
-                }, { once: true });
-            } else {
-                video.src = ch.url;
-                video.play().catch(handlePlaybackError);
-            }
+// Tab switching
+tabBtns.forEach(btn => {
+  btn.onclick = () => {
+    tabBtns.forEach(b => b.classList.remove('text-green-400', 'border-green-400'));
+    tabBtns.forEach(b => b.classList.add('text-gray-400'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+    
+    btn.classList.remove('text-gray-400');
+    btn.classList.add('text-green-400', 'border-green-400');
+    document.getElementById('tab-' + btn.dataset.tab).classList.remove('hidden');
+  };
+});
 
-            addToRecents(ch);
-            resetControlTimer();
-        }
+applySettingsBtn.onclick = () => {
+  const file = modalFileInput.files[0];
+  const url = modalUrlInput.value.trim();
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const list = parseM3U(ev.target.result);
+      loadPlaylist(list, file.name);
+      settingsModal.classList.add('hidden');
+    };
+    reader.readAsText(file);
+  } else if (url) {
+    fetch(url)
+      .then(res => res.ok ? res.text() : Promise.reject(new Error(`HTTP ${res.status}`)))
+      .then(text => {
+        const list = parseM3U(text);
+        const filename = url.split('/').pop() || 'remote_playlist.m3u';
+        loadPlaylist(list, filename);
+        settingsModal.classList.add('hidden');
+      })
+      .catch(err => {
+        showError(`❌ Gagal: ${err.message}`);
+        settingsModal.classList.add('hidden');
+      });
+  } else {
+    showError("⚠️ Pilih file atau masukkan URL!");
+  }
+};
 
-        function addToRecents(ch) {
-            let recents = JSON.parse(localStorage.getItem('rec_v3')) || [];
-            recents = recents.filter(r => r.id !== ch.id);
-            recents.unshift(ch);
-            if (recents.length > 6) recents.pop();
-            localStorage.setItem('rec_v3', JSON.stringify(recents));
-            renderRecents();
-        }
+// Start with splash screen
+startupScreen.classList.remove('hidden');
+</script>
 
-        function renderRecents() {
-            const list = JSON.parse(localStorage.getItem('rec_v3')) || [];
-            const container = document.getElementById('recents-list');
-            const section = document.getElementById('recents-section');
-            if (list.length === 0) { if(section) section.classList.add('hidden'); return; }
-            if (section) section.classList.remove('hidden');
-            if (container) {
-                container.innerHTML = '';
-                list.forEach(ch => container.appendChild(createCard(ch)));
-            }
-        }
-
-        function closePlayer() {
-            const video = document.getElementById('videoPlayer');
-            video.pause();
-            if (currentHls) currentHls.destroy();
-            document.getElementById('player-overlay').classList.add('hidden');
-            document.body.style.cursor = 'default';
-            clearTimeout(controlTimer);
-        }
-
-        function togglePlay() {
-            const video = document.getElementById('videoPlayer');
-            if (video.paused) video.play(); else video.pause();
-            const playIcon = document.getElementById('playIcon');
-            const pauseIcon = document.getElementById('pauseIcon');
-            if (playIcon) playIcon.classList.toggle('hidden', !video.paused);
-            if (pauseIcon) pauseIcon.classList.toggle('hidden', video.paused);
-            resetControlTimer();
-        }
-
-        function toggleFullscreen() {
-            if (!document.fullscreenElement) document.documentElement.requestFullscreen(); else document.exitFullscreen();
-        }
-
-        function togglePiP() {
-            const video = document.getElementById('videoPlayer');
-            if (document.pictureInPictureElement) document.exitPictureInPicture(); else video.requestPictureInPicture();
-        }
-
-        function toggleFav(e, id) {
-            e.stopPropagation();
-            if (favorites.includes(id)) favorites = favorites.filter(f => f !== id); else favorites.push(id);
-            localStorage.setItem('fav_v3', JSON.stringify(favorites));
-            saveAndRender();
-        }
-
-        function renderFavorites() {
-            const grid = document.getElementById('fav-grid');
-            if (!grid) return;
-            grid.innerHTML = '';
-            const list = channels.filter(c => favorites.includes(c.id));
-            list.forEach(ch => grid.appendChild(createCard(ch)));
-        }
-
-        function switchTab(tab) {
-            const tabs = ['home', 'live', 'fav', 'settings', 'about'];
-            tabs.forEach(t => {
-                const screen = document.getElementById('screen-' + t);
-                const btn = document.getElementById('btn-' + t);
-                if (screen) screen.classList.add('hidden');
-                if (btn) {
-                    btn.classList.remove('active', 'text-white');
-                    btn.classList.add('text-gray-400');
-                }
-            });
-            const activeScreen = document.getElementById('screen-' + tab);
-            const activeBtn = document.getElementById('btn-' + tab);
-            if (activeScreen) activeScreen.classList.remove('hidden');
-            if (activeBtn) {
-                activeBtn.classList.add('active', 'text-white');
-                activeBtn.classList.remove('text-gray-400');
-            }
-        }
-
-        function searchChannels() {
-            const searchInput = document.getElementById('searchInput');
-            const term = searchInput ? searchInput.value.toLowerCase().trim() : '';
-            if (term === '') { filterCategory(currentCategory); return; }
-            const filtered = channels.filter(c => c.name.toLowerCase().includes(term) || c.group.toLowerCase().includes(term));
-            renderChannels(filtered);
-            switchTab('live');
-        }
-
-        function clearAllData() {
-            if (confirm("Reset seluruh data aplikasi? Semua playlist dan favorit akan dihapus.")) { 
-                localStorage.clear(); 
-                window.location.reload(); 
-            }
-        }
-
-        function showToast(msg) {
-            const toast = document.getElementById('toast');
-            if (!toast) return;
-            toast.innerText = msg;
-            toast.classList.remove('hidden');
-            setTimeout(() => toast.classList.add('hidden'), 5000); 
-        }
-
-        window.onload = () => {
-            const savedCh = localStorage.getItem('ch_v3');
-            const savedCat = localStorage.getItem('cat_v3');
-            if (savedCh) {
-                channels = JSON.parse(savedCh);
-                categories = JSON.parse(savedCat) || [];
-                saveAndRender();
-                renderRecents();
-            } else {
-                renderCategories();
-            }
-        };
-
-        // Keyboard Shortcuts
-        document.addEventListener('keydown', (e) => {
-            const playerOverlay = document.getElementById('player-overlay');
-            const isPlaying = playerOverlay && !playerOverlay.classList.contains('hidden');
-            
-            if (e.key === 'Escape') closePlayer();
-            if (e.key === ' ' && isPlaying) { 
-                e.preventDefault(); 
-                togglePlay(); 
-            }
-            if (e.key === 'f' && isPlaying) {
-                e.preventDefault();
-                toggleFullscreen();
-            }
-        });
-    </script>
 </body>
 </html>
+
