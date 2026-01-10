@@ -5,7 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>M-TIVI - SMART TV EDITION</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.10"></script>
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+  <script src="https://cdn.dashjs.org/latest/dash.all.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
   <style>
     :root {
@@ -102,6 +103,44 @@
   </div>
 </div>
 
+<!-- SETTINGS MODAL -->
+<div id="settings-modal" class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
+  <div class="bg-gray-900 rounded-xl w-11/12 max-w-md p-6">
+    <div class="flex justify-between items-center mb-4">
+      <h2 class="text-xl font-semibold text-white">Pengaturan</h2>
+      <button class="close-modal text-gray-400 text-2xl">&times;</button>
+    </div>
+
+    <div class="flex border-b border-gray-700 mb-4">
+      <button class="tab-btn px-4 py-2 text-sm font-medium text-green-400 border-b-2 border-green-400" data-tab="settings">Pengaturan</button>
+      <button class="tab-btn px-4 py-2 text-sm font-medium text-gray-400" data-tab="about">Tentang Aplikasi</button>
+    </div>
+
+    <div id="tab-settings" class="tab-content">
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm text-gray-300 mb-1">Upload File M3U Baru</label>
+          <input type="file" id="modal-file-input" accept=".m3u,.m3u8" class="w-full px-3 py-2 bg-gray-800 text-white rounded" />
+        </div>
+        <div>
+          <label class="block text-sm text-gray-300 mb-1">URL Playlist Baru</label>
+          <input type="text" id="modal-url-input" placeholder="https://contoh.com/playlist.m3u" class="w-full px-3 py-2 bg-gray-800 text-white rounded" />
+        </div>
+        <button id="apply-settings" class="w-full py-2 bg-green-600 hover:bg-green-500 rounded text-white">Terapkan Perubahan</button>
+      </div>
+    </div>
+
+    <div id="tab-about" class="tab-content hidden">
+      <div class="text-sm text-gray-300 space-y-3">
+        <h3 class="font-bold text-green-400">Tentang Aplikasi</h3>
+        <p><strong>Nama:</strong> M-TIVI - SMART TV EDITION</p>
+        <p><strong>Versi:</strong> 1.0.0</p>
+        <p><strong>Creativityright by tHoRicQ</strong></p>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
 let channels = [];
 let groups = [];
@@ -121,8 +160,15 @@ const player = document.getElementById('player');
 const playerLoading = document.getElementById('player-loading');
 const playerError = document.getElementById('player-error');
 const errorMessage = document.getElementById('error-message');
+const settingsModal = document.getElementById('settings-modal');
+const settingsBtn = document.getElementById('settings-btn');
+const closeModal = document.querySelector('.close-modal');
+const modalFileInput = document.getElementById('modal-file-input');
+const modalUrlInput = document.getElementById('modal-url-input');
+const applySettingsBtn = document.getElementById('apply-settings');
+const tabBtns = document.querySelectorAll('.tab-btn');
 
-// === Parse M3U ===
+// === Parse M3U dengan Ekstraksi Logo & Grup yang Akurat ===
 function parseM3U(text) {
   const lines = text.split('\n');
   const list = [];
@@ -152,7 +198,7 @@ function parseM3U(text) {
   return list;
 }
 
-// === Render Channel ===
+// === Render Channel dengan Layout Rapi ===
 function renderChannels(list) {
   channelGrid.innerHTML = '';
   if (list.length === 0) {
@@ -183,7 +229,7 @@ function renderChannels(list) {
   });
 }
 
-// === Load Playlist ===
+// === Fungsi Utama ===
 function loadPlaylist(list, name) {
   if (list.length === 0) {
     showError("❌ Tidak ada channel valid.");
@@ -220,12 +266,9 @@ function renderGroups() {
 }
 
 function cleanupPlayer() {
-  if (player.hls) {
-    player.hls.destroy();
-    player.hls = null;
-  }
-  player.innerHTML = '';
-  player.src = '';
+  if (player.hls) { player.hls.destroy(); player.hls = null; }
+  if (player.dash) { player.dash.reset(); player.dash = null; }
+  player.innerHTML = ''; player.src = '';
 }
 
 function showError(msg) {
@@ -245,7 +288,7 @@ function hidePlayerError() {
   player.classList.remove('hidden');
 }
 
-// ✅ HLS PLAYER YANG SUDAH DIPERBAIKI
+// ✅ PLAY OTOMATIS TANPA FULLSCREEN
 function playChannel(channel, index) {
   currentChannelIndex = index;
   document.querySelectorAll('.channel-card').forEach((el, i) => {
@@ -257,55 +300,84 @@ function playChannel(channel, index) {
   playerLoading.classList.remove('hidden');
 
   const url = channel.url.trim();
-
-  // Hanya tangani HLS jika URL berakhir dengan .m3u8
-  if (url.endsWith('.m3u8')) {
-    if (Hls.isSupported()) {
-      const hls = new Hls({
-        enableWorker: false,
-        lowLatencyMode: false,
-        backBufferLength: 30
-      });
-      player.hls = hls;
-      hls.loadSource(url);
-      hls.attachMedia(player);
-
-      hls.on(Hls.Events.MANIFEST_PARSED, () => {
-        playerLoading.classList.add('hidden');
-        // Jangan autoplay — biarkan user klik play
-      });
-
-      hls.on(Hls.Events.ERROR, (event, data) => {
-        console.error("HLS Error:", data);
-        let msg = "❌ Gagal memuat stream.";
-        if (data.fatal) {
-          if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
-            msg = "❌ Kesalahan jaringan. Periksa URL atau koneksi internet.";
-          } else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
-            msg = "❌ Format media tidak didukung.";
-          }
-          hls.destroy();
-          showPlayerError(msg);
-        }
-      });
-    } else if (player.canPlayType('application/vnd.apple.mpegurl')) {
-      // Safari
-      player.src = url;
-      player.onloadstart = () => { playerLoading.classList.add('hidden'); };
-      player.onerror = () => {
-        showPlayerError("❌ Gagal memuat HLS di perangkat ini.");
-      };
-    } else {
-      showPlayerError("❌ HLS tidak didukung oleh browser ini.");
-    }
+  if (url.includes('youtube.com') || url.includes('youtu.be')) {
+    playYouTube(url);
+  } else if (url.endsWith('.m3u8')) {
+    playHLS(url);
+  } else if (url.endsWith('.mpd')) {
+    playDASH(url);
+  } else if (url.match(/\.(mp4|webm|ogg)$/i)) {
+    playDirect(url);
   } else {
-    // Non-HLS: MP4, WebM, dll
+    playHLS(url, () => playDirect(url));
+  }
+}
+
+// === PLAYER LOGIC (tanpa fullscreen otomatis) ===
+function playYouTube(url) {
+  try {
+    let videoId = url.includes('youtu.be/') 
+      ? url.split('youtu.be/')[1].split('?')[0] 
+      : url.split('v=')[1]?.split('&')[0];
+    if (!videoId) throw new Error("Invalid YouTube URL");
+    
+    const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&controls=1`;
+    player.style.display = 'none';
+    playerLoading.classList.add('hidden');
+    
+    const iframe = document.createElement('iframe');
+    iframe.src = embedUrl;
+    iframe.style.width = '100%'; iframe.style.height = '100%'; iframe.style.border = 'none';
+    iframe.allow = 'fullscreen; autoplay';
+    
+    const container = document.getElementById('video-player');
+    container.innerHTML = '';
+    container.appendChild(iframe);
+  } catch (e) {
+    showPlayerError("❌ Gagal memuat YouTube.");
+  }
+}
+
+function playHLS(url, fallback = null) {
+  if (Hls.isSupported()) {
+    const hls = new Hls({ enableWorker: false, lowLatencyMode: false });
+    player.hls = hls;
+    hls.loadSource(url);
+    hls.attachMedia(player);
+    hls.on(Hls.Events.MANIFEST_PARSED, () => { playerLoading.classList.add('hidden'); });
+    hls.on(Hls.Events.ERROR, (event, data) => {
+      if (data.fatal) {
+        hls.destroy();
+        if (fallback) fallback();
+        else showPlayerError("❌ Gagal memuat HLS.");
+      }
+    });
+  } else if (player.canPlayType('application/vnd.apple.mpegurl')) {
     player.src = url;
     player.onloadstart = () => { playerLoading.classList.add('hidden'); };
-    player.onerror = () => {
-      showPlayerError("❌ Gagal memuat video langsung.");
-    };
+    player.onerror = () => { if (fallback) fallback(); else showPlayerError("❌ Gagal memuat HLS."); };
+  } else {
+    if (fallback) fallback();
+    else showPlayerError("❌ HLS tidak didukung.");
   }
+}
+
+function playDASH(url) {
+  try {
+    const dash = dashjs.MediaPlayer().create();
+    player.dash = dash;
+    dash.initialize(player, url, true);
+    dash.on('error', () => { showPlayerError("❌ Gagal memuat DASH."); });
+    playerLoading.classList.add('hidden');
+  } catch (e) {
+    showPlayerError("❌ DASH tidak didukung.");
+  }
+}
+
+function playDirect(url) {
+  player.src = url;
+  player.onloadstart = () => { playerLoading.classList.add('hidden'); };
+  player.onerror = () => { showPlayerError("❌ Gagal memuat video langsung."); };
 }
 
 // === Event Listeners ===
@@ -340,7 +412,57 @@ searchInput.oninput = (e) => {
   const q = e.target.value.toLowerCase();
   const filtered = channels.filter(c => c.name.toLowerCase().includes(q));
   renderChannels(filtered);
+};
+
+// Modal & Tab
+settingsBtn.onclick = () => {
+  settingsModal.classList.remove('hidden');
+  modalUrlInput.value = '';
+  modalFileInput.value = '';
+};
+closeModal.onclick = () => { settingsModal.classList.add('hidden'); };
+settingsModal.onclick = (e) => { if (e.target === settingsModal) settingsModal.classList.add('hidden'); };
+
+tabBtns.forEach(btn => {
+  btn.onclick = () => {
+    tabBtns.forEach(b => b.classList.remove('text-green-400', 'border-green-400'));
+    tabBtns.forEach(b => b.classList.add('text-gray-400'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+    
+    btn.classList.remove('text-gray-400');
+    btn.classList.add('text-green-400', 'border-green-400');
+    document.getElementById('tab-' + btn.dataset.tab).classList.remove('hidden');
+  };
 });
+
+applySettingsBtn.onclick = () => {
+  const file = modalFileInput.files[0];
+  const url = modalUrlInput.value.trim();
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const list = parseM3U(ev.target.result);
+      loadPlaylist(list, file.name);
+      settingsModal.classList.add('hidden');
+    };
+    reader.readAsText(file);
+  } else if (url) {
+    fetch(url)
+      .then(res => res.ok ? res.text() : Promise.reject(new Error(`HTTP ${res.status}`)))
+      .then(text => {
+        const list = parseM3U(text);
+        const filename = url.split('/').pop() || 'remote_playlist.m3u';
+        loadPlaylist(list, filename);
+        settingsModal.classList.add('hidden');
+      })
+      .catch(err => {
+        showError(`❌ Gagal: ${err.message}`);
+        settingsModal.classList.add('hidden');
+      });
+  } else {
+    showError("⚠️ Pilih file atau masukkan URL!");
+  }
+};
 
 startupScreen.classList.remove('hidden');
 </script>
