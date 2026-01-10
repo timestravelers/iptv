@@ -250,7 +250,7 @@
     </div>
 
     <!-- Notification -->
-    <div id="toast" class="fixed bottom-12 left-1/2 -translate-x-1/2 z-[200] px-8 py-4 glass rounded-3xl border border-white/10 text-[10px] font-black uppercase tracking-[0.3em] hidden animate-fade shadow-[0_40px_80px_rgba(0,0,0,0.6)] ring-1 ring-white/10">
+    <div id="toast" class="fixed bottom-12 left-1/2 -translate-x-1/2 z-[200] px-8 py-4 glass rounded-3xl border border-white/10 text-[10px] font-black uppercase tracking-[0.3em] hidden animate-fade shadow-[0_40px_80px_rgba(0,0,0,0.6)] ring-1 ring-white/10 text-center min-w-[300px]">
         Status Sistem
     </div>
 
@@ -265,8 +265,10 @@
         // Timer Real-time
         function updateUI() {
             const now = new Date();
-            document.getElementById('clock').innerText = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false });
-            document.getElementById('date').innerText = now.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'short' }).toUpperCase();
+            const clockEl = document.getElementById('clock');
+            const dateEl = document.getElementById('date');
+            if (clockEl) clockEl.innerText = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false });
+            if (dateEl) dateEl.innerText = now.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'short' }).toUpperCase();
             
             const playerTime = document.getElementById('player-time');
             if (playerTime) playerTime.innerText = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
@@ -348,7 +350,8 @@
         }
 
         async function loadFromUrl() {
-            const url = document.getElementById('m3uUrlInput').value;
+            const urlInput = document.getElementById('m3uUrlInput');
+            const url = urlInput ? urlInput.value : '';
             if (!url) return;
             showToast("Menyambungkan Server...");
             try {
@@ -369,7 +372,8 @@
             renderCategories();
             filterCategory(currentCategory);
             renderFavorites();
-            document.getElementById('channel-count').innerText = `${channels.length} Saluran`;
+            const countEl = document.getElementById('channel-count');
+            if (countEl) countEl.innerText = `${channels.length} Saluran`;
         }
 
         function renderCategories() {
@@ -408,7 +412,8 @@
 
         function filterCategory(cat) {
             currentCategory = cat;
-            document.getElementById('live-title').innerText = cat === 'all' ? 'Semua Saluran' : cat;
+            const titleEl = document.getElementById('live-title');
+            if (titleEl) titleEl.innerText = cat === 'all' ? 'Semua Saluran' : cat;
             
             const filtered = cat === 'all' ? channels : channels.filter(c => c.group === cat);
             renderChannels(filtered);
@@ -427,7 +432,8 @@
                 if (noMsg) noMsg.classList.add('hidden');
                 list.forEach(ch => grid.appendChild(createCard(ch)));
             }
-            document.getElementById('channel-count').innerText = `${list.length} Saluran`;
+            const countEl = document.getElementById('channel-count');
+            if (countEl) countEl.innerText = `${list.length} Saluran`;
         }
 
         function createCard(ch) {
@@ -454,20 +460,67 @@
         function playChannel(ch) {
             const overlay = document.getElementById('player-overlay');
             const video = document.getElementById('videoPlayer');
-            document.getElementById('currentChannelName').innerText = ch.name;
-            document.getElementById('currentCategory').innerText = ch.group;
+            const nameEl = document.getElementById('currentChannelName');
+            const catEl = document.getElementById('currentCategory');
+            if (nameEl) nameEl.innerText = ch.name;
+            if (catEl) catEl.innerText = ch.group;
             overlay.classList.remove('hidden');
             
             if (currentHls) currentHls.destroy();
 
+            // Clear video source
+            video.pause();
+            video.removeAttribute('src');
+            video.load();
+
+            const handlePlaybackError = () => {
+                showToast("Gagal memutar siaran. Saluran tidak tersedia atau server sibuk. Silakan ganti saluran lain.");
+                // We keep the overlay open for a few seconds so user can see the message then we could close it
+                // Or let the user click close. For better UX, we just show the toast.
+            };
+
+            // Error event on video tag itself
+            video.onerror = handlePlaybackError;
+
             if (Hls.isSupported()) {
-                currentHls = new Hls();
+                currentHls = new Hls({
+                    manifestLoadingMaxRetry: 3,
+                    levelLoadingMaxRetry: 3,
+                    enableWorker: true
+                });
                 currentHls.loadSource(ch.url);
                 currentHls.attachMedia(video);
-                currentHls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
+                currentHls.on(Hls.Events.MANIFEST_PARSED, () => {
+                    video.play().catch(handlePlaybackError);
+                });
+                currentHls.on(Hls.Events.ERROR, (event, data) => {
+                    if (data.fatal) {
+                        switch (data.type) {
+                            case Hls.ErrorTypes.NETWORK_ERROR:
+                                console.error("fatal network error encountered, try to recover");
+                                currentHls.startLoad();
+                                break;
+                            case Hls.ErrorTypes.MEDIA_ERROR:
+                                console.error("fatal media error encountered, try to recover");
+                                currentHls.recoverMediaError();
+                                break;
+                            default:
+                                handlePlaybackError();
+                                currentHls.destroy();
+                                break;
+                        }
+                    }
+                });
             } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+                // Native HLS support (Safari)
                 video.src = ch.url;
-                video.play();
+                video.addEventListener('loadedmetadata', function() {
+                    video.play().catch(handlePlaybackError);
+                }, { once: true });
+            } else {
+                // Try playing as standard direct link
+                video.src = ch.url;
+                video.play().catch(handlePlaybackError);
             }
 
             addToRecents(ch);
@@ -507,8 +560,10 @@
         function togglePlay() {
             const video = document.getElementById('videoPlayer');
             if (video.paused) video.play(); else video.pause();
-            document.getElementById('playIcon').classList.toggle('hidden', !video.paused);
-            document.getElementById('pauseIcon').classList.toggle('hidden', video.paused);
+            const playIcon = document.getElementById('playIcon');
+            const pauseIcon = document.getElementById('pauseIcon');
+            if (playIcon) playIcon.classList.toggle('hidden', !video.paused);
+            if (pauseIcon) pauseIcon.classList.toggle('hidden', video.paused);
             resetControlTimer();
         }
 
@@ -556,7 +611,8 @@
         }
 
         function searchChannels() {
-            const term = document.getElementById('searchInput').value.toLowerCase();
+            const searchInput = document.getElementById('searchInput');
+            const term = searchInput ? searchInput.value.toLowerCase() : '';
             if (term === '') { filterCategory(currentCategory); return; }
             const filtered = channels.filter(c => c.name.toLowerCase().includes(term) || c.group.toLowerCase().includes(term));
             renderChannels(filtered);
@@ -575,7 +631,7 @@
             if (!toast) return;
             toast.innerText = msg;
             toast.classList.remove('hidden');
-            setTimeout(() => toast.classList.add('hidden'), 3000);
+            setTimeout(() => toast.classList.add('hidden'), 5000); // 5 Seconds for errors
         }
 
         window.onload = () => {
@@ -594,7 +650,8 @@
         // Keybinds
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') closePlayer();
-            if (e.key === ' ' && !document.getElementById('player-overlay').classList.contains('hidden')) { 
+            const playerOverlay = document.getElementById('player-overlay');
+            if (e.key === ' ' && playerOverlay && !playerOverlay.classList.contains('hidden')) { 
                 e.preventDefault(); 
                 togglePlay(); 
             }
