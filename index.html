@@ -27,8 +27,6 @@
     .channel-card:hover { transform: scale(1.03); z-index: 10; border-color: var(--primary); }
     .custom-scrollbar::-webkit-scrollbar { width: 4px; }
     .custom-scrollbar::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-    .animate-fade { animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
 
     /* Channel grid scrollbar */
     #channel-grid {
@@ -54,7 +52,7 @@
 
 <!-- SPLASH SCREEN -->
 <div id="startup-screen" class="fixed inset-0 flex flex-col items-center justify-center bg-gray-900 z-50">
-  <div class="text-center animate-fade">
+  <div class="text-center">
     <h1 class="text-4xl font-bold text-white mb-6">M-TIVI</h1>
     <p class="text-green-400 mb-8">SMART TV EDITION</p>
     <button id="btn-upload" class="px-6 py-3 bg-gray-800 hover:bg-gray-700 rounded-lg text-white mb-3 w-64">📁 Upload M3U</button>
@@ -89,7 +87,7 @@
     <div class="flex-1 flex flex-col">
       <!-- Video Player -->
       <div id="video-player" class="h-1/2 relative">
-        <video id="player" class="w-full h-full object-contain bg-black"></video>
+        <video id="player" class="w-full h-full object-contain bg-black" controls playsinline></video>
         <div id="player-loading" class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-70 text-green-400 hidden">Memuat stream...</div>
         <div id="player-error" class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-80 text-red-400 text-center p-4 hidden"></div>
       </div>
@@ -179,7 +177,7 @@ function parseM3U(text) {
   for (let line of lines) {
     line = line.trim();
     if (line.startsWith('#EXTINF:')) {
-      // Ekstrak atribut dengan regex yang lebih robust
+      // Regex untuk ekstrak tvg-logo dan group-title secara akurat
       const logoMatch = line.match(/tvg-logo=["']?([^"'>\s]+)/i);
       const groupMatch = line.match(/group-title=["']?([^"'>]+)/i);
       const name = line.split(/,(.+)/).pop()?.trim() || 'Channel';
@@ -214,10 +212,8 @@ function renderChannels(list) {
     el.className = 'channel-card bg-gray-800 rounded-lg p-3 flex items-center gap-3 cursor-pointer border border-transparent transition-all duration-200';
     if (index === currentChannelIndex) el.classList.add('border-green-500');
 
-    // Logo: hanya tampilkan jika valid
     let logoHtml = '';
     if (ch.logo && ch.logo.trim() !== '') {
-      // Tambahkan protokol jika perlu
       let logoUrl = ch.logo;
       if (!logoUrl.startsWith('http') && !logoUrl.startsWith('//')) {
         logoUrl = 'https://' + logoUrl;
@@ -234,7 +230,7 @@ function renderChannels(list) {
   });
 }
 
-// === Sisa fungsi tetap sama (loadPlaylist, playChannel, dll) ===
+// === Fungsi Utama ===
 function loadPlaylist(list, name) {
   if (list.length === 0) {
     showError("❌ Tidak ada channel valid.");
@@ -293,12 +289,7 @@ function hidePlayerError() {
   player.classList.remove('hidden');
 }
 
-function requestFullscreen(element) {
-  if (element.requestFullscreen) element.requestFullscreen();
-  else if (element.webkitRequestFullscreen) element.webkitRequestFullscreen();
-  else if (element.msRequestFullscreen) element.msRequestFullscreen();
-}
-
+// ✅ PLAY OTOMATIS TANPA FULLSCREEN
 function playChannel(channel, index) {
   currentChannelIndex = index;
   document.querySelectorAll('.channel-card').forEach((el, i) => {
@@ -308,7 +299,6 @@ function playChannel(channel, index) {
   cleanupPlayer();
   hidePlayerError();
   playerLoading.classList.remove('hidden');
-  requestFullscreen(player);
 
   const url = channel.url.trim();
   if (url.includes('youtube.com') || url.includes('youtu.be')) {
@@ -324,7 +314,7 @@ function playChannel(channel, index) {
   }
 }
 
-// === YouTube, HLS, DASH, Direct (sama seperti sebelumnya) ===
+// === PLAYER LOGIC (tanpa fullscreen) ===
 function playYouTube(url) {
   try {
     let videoId = url.includes('youtu.be/') 
@@ -391,7 +381,7 @@ function playDirect(url) {
   player.onerror = () => { showPlayerError("❌ Gagal memuat video langsung."); };
 }
 
-// === Event Listeners (sama) ===
+// === Event Listeners ===
 document.getElementById('btn-upload').onclick = () => fileInput.click();
 document.getElementById('btn-url').onclick = () => {
   document.getElementById('url-input-group').classList.remove('hidden');
