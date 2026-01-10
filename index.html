@@ -177,7 +177,6 @@ function parseM3U(text) {
   for (let line of lines) {
     line = line.trim();
     if (line.startsWith('#EXTINF:')) {
-      // Regex untuk ekstrak tvg-logo dan group-title secara akurat
       const logoMatch = line.match(/tvg-logo=["']?([^"'>\s]+)/i);
       const groupMatch = line.match(/group-title=["']?([^"'>]+)/i);
       const name = line.split(/,(.+)/).pop()?.trim() || 'Channel';
@@ -314,7 +313,7 @@ function playChannel(channel, index) {
   }
 }
 
-// === PLAYER LOGIC (tanpa fullscreen) ===
+// === PLAYER LOGIC (tanpa fullscreen otomatis) ===
 function playYouTube(url) {
   try {
     let videoId = url.includes('youtu.be/') 
