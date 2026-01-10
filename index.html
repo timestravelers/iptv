@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ULTRA IPTV PRO - SMART TV EDITION</title>
+    <title>M-TIVI - SMART TV EDITION</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
@@ -30,9 +30,18 @@
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .animate-fade { animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
         .category-scroll::-webkit-scrollbar { display: none; }
+        
+        /* Auto-hide controls */
+        #player-controls {
+            transition: opacity 0.5s ease;
+        }
+        .controls-hidden {
+            opacity: 0 !important;
+            cursor: none;
+        }
     </style>
 </head>
-<body class="h-screen w-screen flex">
+<body class="h-screen w-screen flex" onmousemove="resetControlTimer()">
 
     <!-- Sidebar Navigation -->
     <nav class="w-20 lg:w-72 h-full border-r border-white/5 flex flex-col py-8 glass z-50">
@@ -41,8 +50,8 @@
                 <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-white"><rect width="20" height="15" x="2" y="7" rx="2" ry="2"/><polyline points="17 2 12 7 7 2"/></svg>
             </div>
             <div class="hidden lg:block">
-                <span class="font-extrabold text-2xl tracking-tighter italic block leading-none">ULTRA<span class="text-emerald-500">TV</span></span>
-                <span class="text-[9px] font-black uppercase tracking-[0.3em] text-gray-500">Smart Hub v3</span>
+                <span class="font-extrabold text-2xl tracking-tighter italic block leading-none text-white">M-<span class="text-emerald-500">TIVI</span></span>
+                <span class="text-[9px] font-black uppercase tracking-[0.3em] text-gray-500">Smart Hub v1.1.1</span>
             </div>
         </div>
 
@@ -61,7 +70,6 @@
             </div>
 
             <div id="category-sidebar" class="flex-1 overflow-y-auto category-scroll space-y-1 custom-scrollbar">
-                <!-- Kategori Dinamis Disini -->
                 <p class="px-5 text-[11px] text-gray-700 italic hidden lg:block">Playlist belum dimuat</p>
             </div>
 
@@ -87,7 +95,7 @@
             <div class="flex items-center gap-10">
                 <div class="text-right">
                     <p id="clock" class="text-2xl font-black tracking-tighter leading-none">00:00</p>
-                    <p id="date" class="text-[10px] text-gray-500 uppercase font-black tracking-widest mt-1">SABTU, 12 JAN</p>
+                    <p id="date" class="text-[10px] text-gray-500 uppercase font-black tracking-widest mt-1">MEMUAT...</p>
                 </div>
                 <div class="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center overflow-hidden shadow-xl">
                     <img src="https://api.dicebear.com/7.x/pixel-art/svg?seed=ultra" alt="User">
@@ -107,7 +115,7 @@
                             <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
                             <span class="text-[10px] font-black text-emerald-500 uppercase tracking-widest">Trending Live</span>
                         </div>
-                        <h1 id="hero-title" class="text-7xl font-black mb-6 tracking-tighter uppercase italic leading-none max-w-4xl">Hiburan Tanpa Batas Di Jari Anda</h1>
+                        <h1 id="hero-title" class="text-7xl font-black mb-6 tracking-tighter uppercase italic leading-none max-w-4xl text-white">M-TIVI: Hiburan Di Mana Saja</h1>
                         <p class="text-gray-400 max-w-xl mb-10 text-lg font-medium leading-relaxed">Nikmati akses instan ke ribuan saluran TV premium, olahraga langsung, dan film terbaru dalam kualitas kristal.</p>
                         <div class="flex gap-6">
                             <button onclick="switchTab('live')" class="bg-emerald-500 hover:bg-emerald-400 text-black px-10 py-4 rounded-[24px] font-black text-sm transition-all shadow-2xl shadow-emerald-500/30 active:scale-95 uppercase tracking-widest">Mulai Menonton</button>
@@ -137,6 +145,9 @@
                 </div>
                 <div id="channels-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 2xl:grid-cols-6 gap-8">
                     <!-- Cards injected -->
+                </div>
+                <div id="no-channels-msg" class="hidden py-20 text-center">
+                    <p class="text-gray-500 font-bold italic">Tidak ada saluran ditemukan untuk kategori ini.</p>
                 </div>
             </div>
 
@@ -174,6 +185,19 @@
                         <button onclick="document.getElementById('m3uUpload').click()" class="bg-white px-8 py-3 rounded-xl text-black font-black text-[10px] uppercase tracking-widest hover:brightness-90 transition-all">Pilih Berkas</button>
                     </div>
 
+                    <!-- About Tab / Section -->
+                    <div class="p-8 rounded-3xl bg-white/5 border border-white/5 space-y-4">
+                        <h3 class="text-lg font-black uppercase italic tracking-tighter text-emerald-500">Tentang Aplikasi</h3>
+                        <div class="space-y-2">
+                            <p class="text-sm font-bold">M-TIVI Player</p>
+                            <p class="text-xs text-gray-500">Versi: 1.1.1</p>
+                            <p class="text-xs text-gray-400 leading-relaxed italic">Aplikasi IPTV Player canggih yang dirancang untuk pengalaman Smart TV terbaik. Mendukung berbagai format streaming dan manajemen playlist m3u yang efisien.</p>
+                            <div class="pt-4 border-t border-white/5">
+                                <p class="text-[10px] font-black uppercase tracking-widest text-emerald-500">Creativityright (c) 2026 - ThORiCkQ</p>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="grid grid-cols-2 gap-6 pt-6">
                         <button onclick="clearAllData()" class="bg-red-500/10 border border-red-500/20 text-red-400 py-4 rounded-3xl font-black text-[10px] uppercase tracking-[0.2em] hover:bg-red-500/20 transition-all">Hapus Playlist</button>
                         <button onclick="window.location.reload()" class="bg-blue-500/10 border border-blue-500/20 text-blue-400 py-4 rounded-3xl font-black text-[10px] uppercase tracking-[0.2em] hover:bg-blue-500/20 transition-all">Muat Ulang App</button>
@@ -184,11 +208,11 @@
     </main>
 
     <!-- Fullscreen Player Overlay -->
-    <div id="player-overlay" class="fixed inset-0 bg-black z-[100] hidden flex flex-col items-center justify-center group">
+    <div id="player-overlay" class="fixed inset-0 bg-black z-[100] hidden flex flex-col items-center justify-center group overflow-hidden" onmousemove="resetControlTimer()">
         <video id="videoPlayer" class="w-full h-full object-contain" autoplay crossorigin></video>
         
-        <!-- Controls -->
-        <div class="absolute inset-0 player-gradient opacity-0 group-hover:opacity-100 transition-opacity duration-700 flex flex-col justify-between p-16">
+        <!-- Controls UI -->
+        <div id="player-controls" class="absolute inset-0 player-gradient flex flex-col justify-between p-16">
             <div class="flex items-center justify-between">
                 <div class="flex items-center gap-8">
                     <button onclick="closePlayer()" class="w-14 h-14 rounded-full glass flex items-center justify-center hover:bg-white/20 transition-all active:scale-90 border border-white/10">
@@ -236,6 +260,7 @@
         let favorites = JSON.parse(localStorage.getItem('fav_v3')) || [];
         let currentHls = null;
         let currentCategory = 'all';
+        let controlTimer = null;
 
         // Timer Real-time
         function updateUI() {
@@ -249,38 +274,61 @@
         setInterval(updateUI, 1000);
         updateUI();
 
-        // M3U Engine
+        // Control Auto-hide logic
+        function resetControlTimer() {
+            const controls = document.getElementById('player-controls');
+            if (!controls) return;
+            
+            controls.classList.remove('controls-hidden');
+            document.body.style.cursor = 'default';
+            
+            clearTimeout(controlTimer);
+            
+            // Only hide if the player is active
+            if (!document.getElementById('player-overlay').classList.contains('hidden')) {
+                controlTimer = setTimeout(() => {
+                    controls.classList.add('controls-hidden');
+                    document.body.style.cursor = 'none';
+                }, 4000); // 4 Seconds
+            }
+        }
+
+        // M3U Engine Berkemampuan Tinggi
         function parseM3U(data) {
             const lines = data.split('\n');
             const result = [];
             const catSet = new Set();
             let currentChannel = null;
 
-            lines.forEach(line => {
-                line = line.trim();
+            for (let i = 0; i < lines.length; i++) {
+                let line = lines[i].trim();
+                if (!line) continue;
+
                 if (line.startsWith('#EXTINF')) {
                     const infoLine = line;
                     const commaIndex = line.lastIndexOf(',');
                     const name = line.substring(commaIndex + 1).trim();
 
-                    const logoMatch = infoLine.match(/tvg-logo="([^"]+)"/);
-                    const groupMatch = infoLine.match(/group-title="([^"]+)"/);
+                    const logoMatch = infoLine.match(/tvg-logo="([^"]+)"/i);
+                    const groupMatch = infoLine.match(/group-title="([^"]+)"/i);
                     
                     const group = groupMatch ? groupMatch[1] : 'Lainnya';
                     catSet.add(group);
 
                     currentChannel = {
-                        name: name || 'Unknown Channel',
-                        logo: logoMatch ? logoMatch[1] : `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=111&color=555&bold=true`,
+                        name: name || 'Saluran Tanpa Nama',
+                        logo: logoMatch ? logoMatch[1] : `https://ui-avatars.com/api/?name=${encodeURIComponent(name || 'TV')}&background=111&color=555&bold=true`,
                         group: group,
                         id: Math.random().toString(36).substr(2, 9)
                     };
-                } else if (line.startsWith('http') && currentChannel) {
-                    currentChannel.url = line;
-                    result.push(currentChannel);
-                    currentChannel = null;
+                } else if (line.startsWith('http') || (line.length > 5 && !line.startsWith('#'))) {
+                    if (currentChannel) {
+                        currentChannel.url = line;
+                        result.push(currentChannel);
+                        currentChannel = null;
+                    }
                 }
-            });
+            }
 
             categories = Array.from(catSet).sort();
             return result;
@@ -305,12 +353,13 @@
             showToast("Menyambungkan Server...");
             try {
                 const response = await fetch(url);
+                if (!response.ok) throw new Error("Gagal mengunduh");
                 const data = await response.text();
                 channels = parseM3U(data);
                 saveAndRender();
                 switchTab('live');
             } catch (err) {
-                showToast("Gagal menyambung playlist!");
+                showToast("Gagal menyambung playlist! Periksa URL atau koneksi.");
             }
         }
 
@@ -318,19 +367,26 @@
             localStorage.setItem('ch_v3', JSON.stringify(channels));
             localStorage.setItem('cat_v3', JSON.stringify(categories));
             renderCategories();
-            renderChannels(channels);
+            filterCategory(currentCategory);
             renderFavorites();
             document.getElementById('channel-count').innerText = `${channels.length} Saluran`;
         }
 
-        // Sidebar Rendering
         function renderCategories() {
             const container = document.getElementById('category-sidebar');
+            if (!container) return;
             container.innerHTML = '';
             
-            // Tombol Semua
             const allBtn = createCatBtn('Semua', 'all');
             container.appendChild(allBtn);
+
+            if (categories.length === 0) {
+                const p = document.createElement('p');
+                p.className = "px-5 text-[11px] text-gray-700 italic hidden lg:block";
+                p.innerText = "Playlist belum dimuat";
+                container.appendChild(p);
+                return;
+            }
 
             categories.forEach(cat => {
                 container.appendChild(createCatBtn(cat, cat));
@@ -340,9 +396,10 @@
         function createCatBtn(label, value) {
             const btn = document.createElement('button');
             btn.id = `cat-${value}`;
-            btn.className = `w-full flex items-center gap-4 px-5 py-3 rounded-xl transition-all duration-300 text-gray-500 hover:text-white hover:bg-white/5 text-left group ${currentCategory === value ? 'text-emerald-500 bg-emerald-500/5' : ''}`;
+            const isActive = currentCategory === value;
+            btn.className = `w-full flex items-center gap-4 px-5 py-3 rounded-xl transition-all duration-300 text-gray-500 hover:text-white hover:bg-white/5 text-left group ${isActive ? 'text-emerald-500 bg-emerald-500/5' : ''}`;
             btn.innerHTML = `
-                <div class="w-1.5 h-1.5 rounded-full ${currentCategory === value ? 'bg-emerald-500' : 'bg-gray-800'} group-hover:bg-emerald-500 transition-colors"></div>
+                <div class="w-1.5 h-1.5 rounded-full ${isActive ? 'bg-emerald-500' : 'bg-gray-800'} group-hover:bg-emerald-500 transition-colors"></div>
                 <span class="hidden lg:block font-bold text-[11px] uppercase tracking-wider truncate">${label}</span>
             `;
             btn.onclick = () => filterCategory(value);
@@ -351,18 +408,25 @@
 
         function filterCategory(cat) {
             currentCategory = cat;
-            switchTab('live');
             document.getElementById('live-title').innerText = cat === 'all' ? 'Semua Saluran' : cat;
             
             const filtered = cat === 'all' ? channels : channels.filter(c => c.group === cat);
             renderChannels(filtered);
-            renderCategories(); // Update highlight
+            renderCategories();
         }
 
         function renderChannels(list) {
             const grid = document.getElementById('channels-grid');
+            const noMsg = document.getElementById('no-channels-msg');
+            if (!grid) return;
             grid.innerHTML = '';
-            list.forEach(ch => grid.appendChild(createCard(ch)));
+            
+            if (list.length === 0) {
+                if (noMsg) noMsg.classList.remove('hidden');
+            } else {
+                if (noMsg) noMsg.classList.add('hidden');
+                list.forEach(ch => grid.appendChild(createCard(ch)));
+            }
             document.getElementById('channel-count').innerText = `${list.length} Saluran`;
         }
 
@@ -407,6 +471,7 @@
             }
 
             addToRecents(ch);
+            resetControlTimer();
         }
 
         function addToRecents(ch) {
@@ -422,16 +487,21 @@
             const list = JSON.parse(localStorage.getItem('rec_v3')) || [];
             const container = document.getElementById('recents-list');
             const section = document.getElementById('recents-section');
-            if (list.length === 0) { section.classList.add('hidden'); return; }
-            section.classList.remove('hidden');
-            container.innerHTML = '';
-            list.forEach(ch => container.appendChild(createCard(ch)));
+            if (list.length === 0) { if(section) section.classList.add('hidden'); return; }
+            if (section) section.classList.remove('hidden');
+            if (container) {
+                container.innerHTML = '';
+                list.forEach(ch => container.appendChild(createCard(ch)));
+            }
         }
 
         function closePlayer() {
-            document.getElementById('videoPlayer').pause();
+            const video = document.getElementById('videoPlayer');
+            video.pause();
             if (currentHls) currentHls.destroy();
             document.getElementById('player-overlay').classList.add('hidden');
+            document.body.style.cursor = 'default';
+            clearTimeout(controlTimer);
         }
 
         function togglePlay() {
@@ -439,6 +509,7 @@
             if (video.paused) video.play(); else video.pause();
             document.getElementById('playIcon').classList.toggle('hidden', !video.paused);
             document.getElementById('pauseIcon').classList.toggle('hidden', video.paused);
+            resetControlTimer();
         }
 
         function toggleFullscreen() {
@@ -459,6 +530,7 @@
 
         function renderFavorites() {
             const grid = document.getElementById('fav-grid');
+            if (!grid) return;
             grid.innerHTML = '';
             const list = channels.filter(c => favorites.includes(c.id));
             list.forEach(ch => grid.appendChild(createCard(ch)));
@@ -466,30 +538,41 @@
 
         function switchTab(tab) {
             ['home', 'live', 'fav', 'settings'].forEach(t => {
-                document.getElementById('screen-' + t).classList.add('hidden');
-                document.getElementById('btn-' + t).classList.remove('active', 'text-white');
-                document.getElementById('btn-' + t).classList.add('text-gray-400');
+                const screen = document.getElementById('screen-' + t);
+                const btn = document.getElementById('btn-' + t);
+                if (screen) screen.classList.add('hidden');
+                if (btn) {
+                    btn.classList.remove('active', 'text-white');
+                    btn.classList.add('text-gray-400');
+                }
             });
-            document.getElementById('screen-' + tab).classList.remove('hidden');
+            const activeScreen = document.getElementById('screen-' + tab);
             const activeBtn = document.getElementById('btn-' + tab);
-            activeBtn.classList.add('active', 'text-white');
-            activeBtn.classList.remove('text-gray-400');
+            if (activeScreen) activeScreen.classList.remove('hidden');
+            if (activeBtn) {
+                activeBtn.classList.add('active', 'text-white');
+                activeBtn.classList.remove('text-gray-400');
+            }
         }
 
         function searchChannels() {
             const term = document.getElementById('searchInput').value.toLowerCase();
-            if (term === '') { renderChannels(channels); return; }
+            if (term === '') { filterCategory(currentCategory); return; }
             const filtered = channels.filter(c => c.name.toLowerCase().includes(term) || c.group.toLowerCase().includes(term));
             renderChannels(filtered);
             switchTab('live');
         }
 
         function clearAllData() {
-            if (confirm("Reset seluruh data aplikasi?")) { localStorage.clear(); window.location.reload(); }
+            if (confirm("Reset seluruh data aplikasi? Semua playlist dan favorit akan dihapus.")) { 
+                localStorage.clear(); 
+                window.location.reload(); 
+            }
         }
 
         function showToast(msg) {
             const toast = document.getElementById('toast');
+            if (!toast) return;
             toast.innerText = msg;
             toast.classList.remove('hidden');
             setTimeout(() => toast.classList.add('hidden'), 3000);
@@ -503,13 +586,18 @@
                 categories = JSON.parse(savedCat) || [];
                 saveAndRender();
                 renderRecents();
+            } else {
+                renderCategories();
             }
         };
 
         // Keybinds
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') closePlayer();
-            if (e.key === ' ') { e.preventDefault(); togglePlay(); }
+            if (e.key === ' ' && !document.getElementById('player-overlay').classList.contains('hidden')) { 
+                e.preventDefault(); 
+                togglePlay(); 
+            }
         });
     </script>
 </body>
