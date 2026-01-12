@@ -120,15 +120,12 @@
 
                 const playVideo = () => {
                     video.play().catch(e => {
-                        console.warn("Autoplay blocked, waiting for user interaction", e);
+                        console.warn("Autoplay blocked", e);
                     });
                 };
 
                 if (window.Hls && window.Hls.isSupported()) {
-                    const hls = new window.Hls({
-                        enableWorker: true,
-                        lowLatencyMode: true
-                    });
+                    const hls = new window.Hls({ enableWorker: true, lowLatencyMode: true });
                     hlsRef.current = hls;
                     hls.loadSource(channel.url);
                     hls.attachMedia(video);
@@ -136,14 +133,10 @@
                     hls.on(window.Hls.Events.ERROR, (event, data) => {
                         if (data.fatal) {
                             switch (data.type) {
-                                case window.Hls.ErrorTypes.NETWORK_ERROR:
-                                    hls.startLoad();
-                                    break;
-                                case window.Hls.ErrorTypes.MEDIA_ERROR:
-                                    hls.recoverMediaError();
-                                    break;
+                                case window.Hls.ErrorTypes.NETWORK_ERROR: hls.startLoad(); break;
+                                case window.Hls.ErrorTypes.MEDIA_ERROR: hls.recoverMediaError(); break;
                                 default:
-                                    setError("Gagal memuat siaran. Cek koneksi Anda.");
+                                    setError("Gagal memuat siaran. Cek koneksi.");
                                     hls.destroy();
                                     break;
                             }
@@ -195,6 +188,9 @@
             const [activeGroup, setActiveGroup] = useState('All');
             const [searchQuery, setSearchQuery] = useState('');
             const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+            const [playlistUrl, setPlaylistUrl] = useState('');
+            const [isLoading, setIsLoading] = useState(false);
+            const [loadError, setLoadError] = useState('');
 
             const selectGroup = (group) => {
                 setActiveGroup(group);
@@ -210,6 +206,26 @@
                     setPlaylist(parsed);
                 };
                 reader.readAsText(file);
+            };
+
+            const handleUrlSubmit = async (e) => {
+                e.preventDefault();
+                if (!playlistUrl) return;
+                setIsLoading(true);
+                setLoadError('');
+                try {
+                    const response = await fetch(playlistUrl);
+                    if (!response.ok) throw new Error('Gagal mengambil data dari URL ini.');
+                    const text = await response.text();
+                    const fileName = playlistUrl.split('/').pop() || 'URL Playlist';
+                    const parsed = parseM3U(text, fileName);
+                    setPlaylist(parsed);
+                } catch (err) {
+                    setLoadError('Gagal memuat playlist. Pastikan URL benar dan mendukung CORS.');
+                    console.error(err);
+                } finally {
+                    setIsLoading(false);
+                }
             };
 
             const filteredChannels = useMemo(() => {
@@ -237,7 +253,7 @@
                                 <div className="flex-1 overflow-y-auto p-4 space-y-1">
                                     <button 
                                         onClick={() => selectGroup('All')}
-                                        className={`w-full text-left px-4 py-3 rounded-xl transition-all text-sm font-medium ${activeGroup === 'All' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20' : 'text-zinc-500 hover:bg-zinc-900'}`}
+                                        className={`w-full text-left px-4 py-3 rounded-xl transition-all text-sm font-medium ${activeGroup === 'All' ? 'bg-indigo-600 text-white shadow-lg' : 'text-zinc-500 hover:bg-zinc-900'}`}
                                     >
                                         Semua Saluran
                                     </button>
@@ -245,14 +261,14 @@
                                         <button 
                                             key={group}
                                             onClick={() => selectGroup(group)}
-                                            className={`w-full text-left px-4 py-3 rounded-xl transition-all text-sm truncate font-medium ${activeGroup === group ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20' : 'text-zinc-500 hover:bg-zinc-900'}`}
+                                            className={`w-full text-left px-4 py-3 rounded-xl transition-all text-sm truncate font-medium ${activeGroup === group ? 'bg-indigo-600 text-white shadow-lg' : 'text-zinc-500 hover:bg-zinc-900'}`}
                                         >
                                             {group}
                                         </button>
                                     ))}
                                 </div>
                                 <div className="p-4 border-t border-zinc-800">
-                                    <button onClick={() => { setPlaylist(null); setSelectedChannel(null); }} className="text-zinc-500 hover:text-white text-[10px] uppercase tracking-widest font-bold flex items-center justify-center gap-2 px-4 py-3 bg-zinc-900/50 rounded-xl w-full transition-colors">
+                                    <button onClick={() => { setPlaylist(null); setSelectedChannel(null); setPlaylistUrl(''); }} className="text-zinc-500 hover:text-white text-[10px] uppercase tracking-widest font-bold flex items-center justify-center gap-2 px-4 py-3 bg-zinc-900/50 rounded-xl w-full transition-colors">
                                         Ganti Playlist
                                     </button>
                                 </div>
@@ -284,21 +300,52 @@
 
                             <div className="flex-1 overflow-y-auto relative scroll-smooth">
                                 {!playlist ? (
-                                    <div className="h-full flex flex-col items-center justify-center text-center p-6 relative">
+                                    <div className="h-full flex flex-col items-center justify-center p-6 relative">
                                         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[280px] md:w-[500px] h-[280px] md:h-[500px] bg-indigo-600/10 blur-[80px] md:blur-[120px] rounded-full animate-pulse"></div>
                                         
-                                        <div className="relative z-10 space-y-6 md:space-y-8">
+                                        <div className="relative z-10 w-full max-w-md space-y-8 animate-fade-in text-center">
                                             <div className="w-16 h-16 md:w-24 md:h-24 bg-zinc-900 border border-zinc-800 rounded-2xl md:rounded-3xl flex items-center justify-center mx-auto shadow-2xl">
                                                 <svg className="w-8 h-8 md:w-12 md:h-12 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>
                                             </div>
                                             <div>
                                                 <h1 className="text-3xl md:text-5xl font-black mb-3">Mulai Nonton</h1>
-                                                <p className="text-zinc-500 text-sm md:text-base max-w-[260px] md:max-w-sm mx-auto leading-relaxed">Pilih file M3U dan nikmati siaran TV langsung di smartphone Anda.</p>
+                                                <p className="text-zinc-500 text-sm md:text-base leading-relaxed">Pilih metode input untuk memuat saluran TV Anda.</p>
                                             </div>
-                                            <label className="inline-block bg-white text-black font-bold px-8 md:px-10 py-3 md:py-4 rounded-xl md:rounded-2xl cursor-pointer hover:bg-zinc-200 transition-all shadow-xl text-sm md:text-base active:scale-95">
-                                                Pilih File M3U
-                                                <input type="file" className="hidden" accept=".m3u" onChange={handleFileUpload} />
-                                            </label>
+
+                                            <div className="space-y-4">
+                                                <form onSubmit={handleUrlSubmit} className="relative group">
+                                                    <input 
+                                                        type="url" 
+                                                        placeholder="Masukkan URL M3U..." 
+                                                        className="w-full bg-zinc-900 border border-zinc-800 rounded-2xl px-5 py-4 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all placeholder:text-zinc-700"
+                                                        value={playlistUrl}
+                                                        onChange={(e) => setPlaylistUrl(e.target.value)}
+                                                        disabled={isLoading}
+                                                    />
+                                                    <button 
+                                                        type="submit" 
+                                                        disabled={isLoading || !playlistUrl}
+                                                        className="absolute right-2 top-2 bottom-2 bg-indigo-600 hover:bg-indigo-500 disabled:bg-zinc-800 text-white font-bold px-4 rounded-xl transition-all text-xs"
+                                                    >
+                                                        {isLoading ? 'Loading...' : 'Buka URL'}
+                                                    </button>
+                                                </form>
+
+                                                <div className="flex items-center gap-4 text-zinc-800 py-2">
+                                                    <div className="h-px bg-zinc-900 flex-1"></div>
+                                                    <span className="text-[10px] font-bold uppercase tracking-widest">Atau</span>
+                                                    <div className="h-px bg-zinc-900 flex-1"></div>
+                                                </div>
+
+                                                <label className="block w-full bg-zinc-900 border border-zinc-800 text-zinc-400 font-bold px-8 py-4 rounded-2xl cursor-pointer hover:bg-zinc-800 transition-all shadow-xl text-sm active:scale-[0.98]">
+                                                    Upload File M3U
+                                                    <input type="file" className="hidden" accept=".m3u" onChange={handleFileUpload} />
+                                                </label>
+
+                                                {loadError && (
+                                                    <p className="text-red-500 text-xs font-medium animate-pulse">{loadError}</p>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
                                 ) : (
@@ -343,7 +390,7 @@
                     
                     <footer className="w-full py-3 border-t border-zinc-900 glass-header text-center z-50">
                         <p className="text-[9px] md:text-xs text-zinc-600 tracking-wider uppercase font-bold px-4">
-                            (c)2026 - <span className="text-zinc-400">M. Thorik</span> | KIRIM DONASI KE DANA: <span className="text-indigo-400">087888879016</span>
+                            (c)2026 - <span className="text-zinc-400">M. Thorik</span> | DANA: <span className="text-indigo-400">087888879016</span>
                         </p>
                     </footer>
                 </div>
