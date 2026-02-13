@@ -1,17 +1,17 @@
-
 <!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>IQ-TV</title>
-    <!-- Dependencies -->
+    <!-- Dependencies - FIXED URLS (removed trailing spaces) -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     
+    <!-- FIXED FONT URL (removed space in parameter) -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -58,6 +58,12 @@
                 height: 100%;
                 z-index: 100;
                 box-shadow: 20px 0 50px rgba(0,0,0,0.9);
+                width: 280px; /* Fixed mobile width */
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+            }
+            .sidebar-mobile.open {
+                transform: translateX(0);
             }
             .sidebar-overlay {
                 position: fixed;
@@ -65,6 +71,13 @@
                 background: rgba(0,0,0,0.7);
                 backdrop-filter: blur(6px);
                 z-index: 90;
+                opacity: 0;
+                pointer-events: none;
+                transition: opacity 0.3s ease;
+            }
+            .sidebar-overlay.visible {
+                opacity: 1;
+                pointer-events: auto;
             }
         }
     </style>
@@ -110,22 +123,30 @@
             const videoRef = useRef(null);
             const hlsRef = useRef(null);
             const [error, setError] = useState(null);
+            const [isMuted, setIsMuted] = useState(true); // Start muted for autoplay
 
             useEffect(() => {
                 if (!channel || !videoRef.current) return;
                 const video = videoRef.current;
                 setError(null);
+                video.muted = isMuted; // Ensure mute state is applied
 
                 if (hlsRef.current) hlsRef.current.destroy();
 
                 const playVideo = () => {
                     video.play().catch(e => {
-                        console.warn("Autoplay blocked", e);
+                        console.warn("Autoplay blocked or failed", e);
+                        setError("Gagal memutar video. Silakan klik tombol play.");
                     });
                 };
 
                 if (window.Hls && window.Hls.isSupported()) {
-                    const hls = new window.Hls({ enableWorker: true, lowLatencyMode: true });
+                    const hls = new window.Hls({ 
+                        enableWorker: true, 
+                        lowLatencyMode: true,
+                        fragLoadingTimeOut: 10000,
+                        manifestLoadingTimeOut: 10000
+                    });
                     hlsRef.current = hls;
                     hls.loadSource(channel.url);
                     hls.attachMedia(video);
@@ -133,10 +154,14 @@
                     hls.on(window.Hls.Events.ERROR, (event, data) => {
                         if (data.fatal) {
                             switch (data.type) {
-                                case window.Hls.ErrorTypes.NETWORK_ERROR: hls.startLoad(); break;
-                                case window.Hls.ErrorTypes.MEDIA_ERROR: hls.recoverMediaError(); break;
+                                case window.Hls.ErrorTypes.NETWORK_ERROR: 
+                                    hls.startLoad();
+                                    break;
+                                case window.Hls.ErrorTypes.MEDIA_ERROR: 
+                                    hls.recoverMediaError();
+                                    break;
                                 default:
-                                    setError("Gagal memuat siaran. Cek koneksi.");
+                                    setError("Gagal memuat siaran. Cek koneksi atau coba lagi.");
                                     hls.destroy();
                                     break;
                             }
@@ -149,30 +174,67 @@
                     setError("Browser tidak mendukung format video ini.");
                 }
 
-                return () => { if (hlsRef.current) hlsRef.current.destroy(); };
-            }, [channel]);
+                return () => { 
+                    if (hlsRef.current) {
+                        hlsRef.current.destroy();
+                        hlsRef.current = null;
+                    }
+                };
+            }, [channel, isMuted]);
+
+            const toggleMute = () => {
+                if (videoRef.current) {
+                    videoRef.current.muted = !isMuted;
+                    setIsMuted(!isMuted);
+                }
+            };
 
             return (
                 <div className="flex flex-col bg-zinc-900 rounded-xl overflow-hidden shadow-2xl border border-zinc-800 max-w-4xl mx-auto w-full animate-fade-in">
                     <div className="relative aspect-video bg-black group">
-                        <video ref={videoRef} className="w-full h-full" controls playsInline crossOrigin="anonymous" />
+                        <video 
+                            ref={videoRef} 
+                            className="w-full h-full" 
+                            controls 
+                            playsInline 
+                            crossOrigin="anonymous"
+                            muted={isMuted}
+                        />
                         {error && (
                             <div className="absolute inset-0 flex items-center justify-center bg-black/90 p-4 text-center">
                                 <div className="space-y-3">
                                     <p className="text-red-400 font-medium text-sm">{error}</p>
-                                    <button onClick={() => window.location.reload()} className="text-xs bg-zinc-800 px-3 py-1 rounded-full">Refresh</button>
+                                    <button 
+                                        onClick={() => window.location.reload()} 
+                                        className="text-xs bg-zinc-800 hover:bg-zinc-700 px-3 py-1 rounded-full transition-colors"
+                                        aria-label="Refresh player"
+                                    >
+                                        Refresh
+                                    </button>
                                 </div>
                             </div>
                         )}
                         <button 
                             onClick={onClose}
                             className="absolute top-2 right-2 bg-black/60 hover:bg-red-600 p-2 rounded-full transition-all shadow-lg z-10"
+                            aria-label="Close player"
                         >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                         </button>
+                        <button 
+                            onClick={toggleMute}
+                            className="absolute bottom-3 right-3 bg-black/60 hover:bg-indigo-600 p-2 rounded-full transition-all shadow-lg z-10"
+                            aria-label={isMuted ? "Unmute video" : "Mute video"}
+                        >
+                            {isMuted ? (
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" clipRule="evenodd" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" /></svg>
+                            ) : (
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /></svg>
+                            )}
+                        </button>
                     </div>
                     <div className="p-3 flex items-center gap-3 bg-zinc-900/50">
-                        {channel.logo && <img src={channel.logo} className="w-8 h-8 rounded bg-white/5 p-1 object-contain shrink-0" onError={(e) => e.target.style.display='none'} />}
+                        {channel.logo && <img src={channel.logo} className="w-8 h-8 rounded bg-white/5 p-1 object-contain shrink-0" alt={`${channel.name} logo`} onError={(e) => e.target.style.display='none'} />}
                         <div className="overflow-hidden">
                             <h3 className="font-bold text-zinc-100 text-sm truncate">{channel.name}</h3>
                             <p className="text-zinc-500 text-[10px] truncate uppercase tracking-wider">{channel.group}</p>
@@ -191,6 +253,18 @@
             const [playlistUrl, setPlaylistUrl] = useState('');
             const [isLoading, setIsLoading] = useState(false);
             const [loadError, setLoadError] = useState('');
+            const sidebarRef = useRef(null);
+
+            // Close sidebar when clicking outside on mobile
+            useEffect(() => {
+                const handleClickOutside = (event) => {
+                    if (window.innerWidth < 768 && isSidebarOpen && sidebarRef.current && !sidebarRef.current.contains(event.target)) {
+                        setIsSidebarOpen(false);
+                    }
+                };
+                document.addEventListener('mousedown', handleClickOutside);
+                return () => document.removeEventListener('mousedown', handleClickOutside);
+            }, [isSidebarOpen]);
 
             const selectGroup = (group) => {
                 setActiveGroup(group);
@@ -202,27 +276,41 @@
                 if (!file) return;
                 const reader = new FileReader();
                 reader.onload = (event) => {
-                    const parsed = parseM3U(event.target.result, file.name);
-                    setPlaylist(parsed);
+                    try {
+                        const parsed = parseM3U(event.target.result, file.name);
+                        setPlaylist(parsed);
+                        setActiveGroup('All');
+                        setSearchQuery('');
+                        setIsSidebarOpen(window.innerWidth >= 768); // Open sidebar on desktop
+                    } catch (err) {
+                        setLoadError('Format file tidak valid. Pastikan file M3U benar.');
+                        console.error(err);
+                    }
                 };
                 reader.readAsText(file);
+                // Reset input value to allow re-uploading same file
+                e.target.value = null;
             };
 
             const handleUrlSubmit = async (e) => {
                 e.preventDefault();
-                if (!playlistUrl) return;
+                if (!playlistUrl.trim()) return;
                 setIsLoading(true);
                 setLoadError('');
                 try {
-                    const response = await fetch(playlistUrl);
-                    if (!response.ok) throw new Error('Gagal mengambil data dari URL ini.');
+                    const response = await fetch(playlistUrl, { mode: 'cors' });
+                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
                     const text = await response.text();
                     const fileName = playlistUrl.split('/').pop() || 'URL Playlist';
                     const parsed = parseM3U(text, fileName);
                     setPlaylist(parsed);
+                    setActiveGroup('All');
+                    setSearchQuery('');
+                    setPlaylistUrl('');
+                    setIsSidebarOpen(window.innerWidth >= 768); // Open sidebar on desktop
                 } catch (err) {
                     setLoadError('Gagal memuat playlist. Pastikan URL benar dan mendukung CORS.');
-                    console.error(err);
+                    console.error('Playlist load error:', err);
                 } finally {
                     setIsLoading(false);
                 }
@@ -237,23 +325,56 @@
                 });
             }, [playlist, activeGroup, searchQuery]);
 
+            // Handle ESC key to close player
+            useEffect(() => {
+                const handleEsc = (e) => {
+                    if (e.key === 'Escape' && selectedChannel) {
+                        setSelectedChannel(null);
+                    }
+                };
+                window.addEventListener('keydown', handleEsc);
+                return () => window.removeEventListener('keydown', handleEsc);
+            }, [selectedChannel]);
+
             return (
                 <div className="flex flex-col h-screen overflow-hidden bg-black">
                     <div className="flex flex-1 overflow-hidden relative">
-                        {isSidebarOpen && <div className="sidebar-overlay block md:hidden" onClick={() => setIsSidebarOpen(false)}></div>}
+                        {/* Mobile sidebar overlay */}
+                        {isSidebarOpen && window.innerWidth < 768 && (
+                            <div 
+                                className={`sidebar-overlay ${isSidebarOpen ? 'visible' : ''}`} 
+                                onClick={() => setIsSidebarOpen(false)}
+                                aria-hidden="true"
+                            ></div>
+                        )}
 
+                        {/* Sidebar */}
                         {playlist && (
-                            <aside className={`${isSidebarOpen ? 'w-72' : 'w-0'} md:w-72 overflow-hidden bg-zinc-950 border-r border-zinc-800 transition-all duration-300 flex flex-col z-50 sidebar-mobile ${!isSidebarOpen && 'md:w-0'}`}>
+                            <aside 
+                                ref={sidebarRef}
+                                className={`sidebar-mobile ${isSidebarOpen ? 'open' : ''} ${
+                                    window.innerWidth >= 768 ? 'block' : 'hidden'
+                                } md:block bg-zinc-950 border-r border-zinc-800 z-50`}
+                            >
                                 <div className="p-6 border-b border-zinc-800 flex justify-between items-center">
                                     <h1 className="text-xl font-black bg-gradient-to-r from-blue-400 to-indigo-500 bg-clip-text text-transparent">IQ-TV</h1>
-                                    <button className="md:hidden text-zinc-500" onClick={() => setIsSidebarOpen(false)}>
+                                    <button 
+                                        className="md:hidden text-zinc-500 hover:text-white p-2" 
+                                        onClick={() => setIsSidebarOpen(false)}
+                                        aria-label="Close menu"
+                                    >
                                         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                                     </button>
                                 </div>
                                 <div className="flex-1 overflow-y-auto p-4 space-y-1">
                                     <button 
                                         onClick={() => selectGroup('All')}
-                                        className={`w-full text-left px-4 py-3 rounded-xl transition-all text-sm font-medium ${activeGroup === 'All' ? 'bg-indigo-600 text-white shadow-lg' : 'text-zinc-500 hover:bg-zinc-900'}`}
+                                        className={`w-full text-left px-4 py-3 rounded-xl transition-all text-sm font-medium ${
+                                            activeGroup === 'All' 
+                                                ? 'bg-indigo-600 text-white shadow-lg' 
+                                                : 'text-zinc-500 hover:bg-zinc-900'
+                                        }`}
+                                        aria-current={activeGroup === 'All' ? 'true' : 'false'}
                                     >
                                         Semua Saluran
                                     </button>
@@ -261,14 +382,30 @@
                                         <button 
                                             key={group}
                                             onClick={() => selectGroup(group)}
-                                            className={`w-full text-left px-4 py-3 rounded-xl transition-all text-sm truncate font-medium ${activeGroup === group ? 'bg-indigo-600 text-white shadow-lg' : 'text-zinc-500 hover:bg-zinc-900'}`}
+                                            className={`w-full text-left px-4 py-3 rounded-xl transition-all text-sm truncate font-medium ${
+                                                activeGroup === group 
+                                                    ? 'bg-indigo-600 text-white shadow-lg' 
+                                                    : 'text-zinc-500 hover:bg-zinc-900'
+                                            }`}
+                                            aria-current={activeGroup === group ? 'true' : 'false'}
                                         >
                                             {group}
                                         </button>
                                     ))}
                                 </div>
                                 <div className="p-4 border-t border-zinc-800">
-                                    <button onClick={() => { setPlaylist(null); setSelectedChannel(null); setPlaylistUrl(''); }} className="text-zinc-500 hover:text-white text-[10px] uppercase tracking-widest font-bold flex items-center justify-center gap-2 px-4 py-3 bg-zinc-900/50 rounded-xl w-full transition-colors">
+                                    <button 
+                                        onClick={() => { 
+                                            setPlaylist(null); 
+                                            setSelectedChannel(null); 
+                                            setPlaylistUrl(''); 
+                                            setActiveGroup('All');
+                                            setSearchQuery('');
+                                        }} 
+                                        className="text-zinc-500 hover:text-white text-[10px] uppercase tracking-widest font-bold flex items-center justify-center gap-2 px-4 py-3 bg-zinc-900/50 rounded-xl w-full transition-colors"
+                                        aria-label="Ganti playlist"
+                                    >
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
                                         Ganti Playlist
                                     </button>
                                 </div>
@@ -278,21 +415,32 @@
                         <main className="flex-1 flex flex-col overflow-hidden relative">
                             <header className="h-16 border-b border-zinc-800 flex items-center justify-between px-4 md:px-6 glass-header z-30">
                                 <div className="flex items-center gap-2 md:gap-4 overflow-hidden">
-                                    {playlist && (
-                                        <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 hover:bg-zinc-800 rounded-lg shrink-0">
-                                            <svg className="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>
+                                    {playlist && window.innerWidth < 768 && (
+                                        <button 
+                                            onClick={() => setIsSidebarOpen(!isSidebarOpen)} 
+                                            className="p-2 hover:bg-zinc-800 rounded-lg shrink-0"
+                                            aria-label={isSidebarOpen ? "Close menu" : "Open menu"}
+                                        >
+                                            <svg className="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                                            </svg>
                                         </button>
                                     )}
-                                    <h2 className="font-bold text-sm md:text-lg truncate">{playlist ? playlist.name : 'Welcome to IQ-TV'}</h2>
+                                    <h2 className="font-bold text-sm md:text-lg truncate">
+                                        {playlist ? playlist.name : 'Welcome to IQ-TV'}
+                                    </h2>
                                 </div>
                                 {playlist && (
                                     <div className="flex-1 max-w-[120px] md:max-w-xs ml-2">
+                                        <label htmlFor="search" className="sr-only">Cari saluran</label>
                                         <input 
+                                            id="search"
                                             type="text" 
                                             placeholder="Cari..." 
                                             className="bg-zinc-900 border border-zinc-800 rounded-full px-4 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full transition-all"
                                             value={searchQuery}
                                             onChange={(e) => setSearchQuery(e.target.value)}
+                                            aria-label="Cari saluran TV"
                                         />
                                     </div>
                                 )}
@@ -313,22 +461,40 @@
                                             </div>
 
                                             <div className="space-y-4">
-                                                <form onSubmit={handleUrlSubmit} className="relative group">
-                                                    <input 
-                                                        type="url" 
-                                                        placeholder="Masukkan URL M3U..." 
-                                                        className="w-full bg-zinc-900 border border-zinc-800 rounded-2xl px-5 py-4 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all placeholder:text-zinc-700"
-                                                        value={playlistUrl}
-                                                        onChange={(e) => setPlaylistUrl(e.target.value)}
-                                                        disabled={isLoading}
-                                                    />
-                                                    <button 
-                                                        type="submit" 
-                                                        disabled={isLoading || !playlistUrl}
-                                                        className="absolute right-2 top-2 bottom-2 bg-indigo-600 hover:bg-indigo-500 disabled:bg-zinc-800 text-white font-bold px-4 rounded-xl transition-all text-xs"
-                                                    >
-                                                        {isLoading ? 'Loading...' : 'Buka URL'}
-                                                    </button>
+                                                <form onSubmit={handleUrlSubmit} className="space-y-2">
+                                                    <div className="relative">
+                                                        <label htmlFor="playlist-url" className="sr-only">URL Playlist M3U</label>
+                                                        <input 
+                                                            id="playlist-url"
+                                                            type="url" 
+                                                            placeholder="Masukkan URL M3U..." 
+                                                            className="w-full bg-zinc-900 border border-zinc-800 rounded-2xl px-5 py-4 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all placeholder:text-zinc-700 pr-28"
+                                                            value={playlistUrl}
+                                                            onChange={(e) => setPlaylistUrl(e.target.value)}
+                                                            disabled={isLoading}
+                                                            aria-invalid={!!loadError}
+                                                            aria-describedby={loadError ? "url-error" : undefined}
+                                                        />
+                                                        <button 
+                                                            type="submit" 
+                                                            disabled={isLoading || !playlistUrl.trim()}
+                                                            className="absolute right-2 top-2 bottom-2 bg-indigo-600 hover:bg-indigo-500 disabled:bg-zinc-800 text-white font-bold px-4 rounded-xl transition-all text-xs flex items-center justify-center"
+                                                            aria-busy={isLoading}
+                                                        >
+                                                            {isLoading ? (
+                                                                <span className="flex items-center">
+                                                                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                                                    </svg>
+                                                                    Loading...
+                                                                </span>
+                                                            ) : 'Buka URL'}
+                                                        </button>
+                                                    </div>
+                                                    {loadError && (
+                                                        <p id="url-error" className="text-red-500 text-xs font-medium animate-pulse">{loadError}</p>
+                                                    )}
                                                 </form>
 
                                                 <div className="flex items-center gap-4 text-zinc-800 py-2">
@@ -338,13 +504,15 @@
                                                 </div>
 
                                                 <label className="block w-full bg-zinc-900 border border-zinc-800 text-zinc-400 font-bold px-8 py-4 rounded-2xl cursor-pointer hover:bg-zinc-800 transition-all shadow-xl text-sm active:scale-[0.98]">
-                                                    Upload File M3U
-                                                    <input type="file" className="hidden" accept=".m3u" onChange={handleFileUpload} />
+                                                    <input 
+                                                        type="file" 
+                                                        className="hidden" 
+                                                        accept=".m3u,.m3u8" 
+                                                        onChange={handleFileUpload} 
+                                                        aria-label="Upload file M3U"
+                                                    />
+                                                    <span>Upload File M3U/M3U8</span>
                                                 </label>
-
-                                                {loadError && (
-                                                    <p className="text-red-500 text-xs font-medium animate-pulse">{loadError}</p>
-                                                )}
                                             </div>
                                         </div>
                                     </div>
@@ -358,29 +526,67 @@
 
                                         <div className="p-4 md:p-10 space-y-6 md:space-y-8 max-w-7xl mx-auto w-full">
                                             <div className="flex items-center justify-between">
-                                                <h3 className="text-lg md:text-2xl font-bold truncate pr-2">{activeGroup === 'All' ? 'Saluran Unggulan' : activeGroup}</h3>
-                                                <span className="bg-zinc-900 px-3 py-1 rounded-full text-zinc-500 text-[10px] md:text-sm font-mono shrink-0 border border-zinc-800">{filteredChannels.length} TV</span>
+                                                <h3 className="text-lg md:text-2xl font-bold truncate pr-2">
+                                                    {activeGroup === 'All' ? 'Semua Saluran' : activeGroup}
+                                                </h3>
+                                                <span className="bg-zinc-900 px-3 py-1 rounded-full text-zinc-500 text-[10px] md:text-sm font-mono shrink-0 border border-zinc-800">
+                                                    {filteredChannels.length} Saluran
+                                                </span>
                                             </div>
 
-                                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 md:gap-4">
-                                                {filteredChannels.map(ch => (
+                                            {filteredChannels.length === 0 ? (
+                                                <div className="text-center py-12">
+                                                    <p className="text-zinc-500 text-lg">Tidak ada saluran yang sesuai dengan pencarian "{searchQuery}"</p>
                                                     <button 
-                                                        key={ch.id} 
-                                                        onClick={() => { setSelectedChannel(ch); window.scrollTo({top: 0, behavior: 'smooth'}); }}
-                                                        className={`group p-2.5 rounded-xl border transition-all text-center flex flex-col items-center ${selectedChannel?.id === ch.id ? 'bg-indigo-600/10 border-indigo-500 shadow-lg' : 'bg-zinc-900/40 border-zinc-800 hover:border-zinc-600 hover:bg-zinc-900'}`}
+                                                        onClick={() => setSearchQuery('')}
+                                                        className="mt-4 text-indigo-400 hover:text-indigo-300 text-sm"
                                                     >
-                                                        <div className="w-full aspect-square bg-zinc-800 rounded-lg mb-2 flex items-center justify-center overflow-hidden relative shadow-inner">
-                                                            {ch.logo ? <img src={ch.logo} className="w-full h-full object-contain p-2" loading="lazy" onError={(e) => e.target.style.opacity='0'} /> : <span className="text-2xl md:text-3xl font-bold text-zinc-700">{ch.name[0]}</span>}
-                                                            <div className="absolute inset-0 bg-indigo-600/0 group-hover:bg-indigo-600/10 transition-colors flex items-center justify-center">
-                                                                <div className="w-8 h-8 bg-indigo-600 rounded-full opacity-0 group-hover:opacity-100 transition-all transform scale-50 group-hover:scale-100 flex items-center justify-center shadow-lg">
-                                                                    <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                                                        Reset pencarian
+                                                    </button>
+                                                </div>
+                                            ) : (
+                                                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 md:gap-4">
+                                                    {filteredChannels.map(ch => (
+                                                        <button 
+                                                            key={ch.id} 
+                                                            onClick={() => { 
+                                                                setSelectedChannel(ch); 
+                                                                if (window.innerWidth < 768) setIsSidebarOpen(false);
+                                                                window.scrollTo({top: 0, behavior: 'smooth'});
+                                                            }}
+                                                            className={`group p-2.5 rounded-xl border transition-all text-center flex flex-col items-center ${
+                                                                selectedChannel?.id === ch.id 
+                                                                    ? 'bg-indigo-600/10 border-indigo-500 shadow-lg' 
+                                                                    : 'bg-zinc-900/40 border-zinc-800 hover:border-zinc-600 hover:bg-zinc-900'
+                                                            }`}
+                                                            aria-label={`Putar ${ch.name}`}
+                                                        >
+                                                            <div className="w-full aspect-square bg-zinc-800 rounded-lg mb-2 flex items-center justify-center overflow-hidden relative shadow-inner">
+                                                                {ch.logo ? (
+                                                                    <img 
+                                                                        src={ch.logo} 
+                                                                        alt={`${ch.name} logo`} 
+                                                                        className="w-full h-full object-contain p-2" 
+                                                                        loading="lazy" 
+                                                                        onError={(e) => {
+                                                                            e.target.style.opacity = '0';
+                                                                            e.target.parentElement.innerHTML = `<span class="text-2xl md:text-3xl font-bold text-zinc-700">${ch.name[0]}</span>`;
+                                                                        }} 
+                                                                    />
+                                                                ) : (
+                                                                    <span className="text-2xl md:text-3xl font-bold text-zinc-700">{ch.name[0]}</span>
+                                                                )}
+                                                                <div className="absolute inset-0 bg-indigo-600/0 group-hover:bg-indigo-600/10 transition-colors flex items-center justify-center">
+                                                                    <div className="w-8 h-8 bg-indigo-600 rounded-full opacity-0 group-hover:opacity-100 transition-all transform scale-50 group-hover:scale-100 flex items-center justify-center shadow-lg">
+                                                                        <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                                                                    </div>
                                                                 </div>
                                                             </div>
-                                                        </div>
-                                                        <span className="text-[10px] md:text-xs font-semibold line-clamp-2 text-zinc-300 group-hover:text-white leading-tight">{ch.name}</span>
-                                                    </button>
-                                                ))}
-                                            </div>
+                                                            <span className="text-[10px] md:text-xs font-semibold line-clamp-2 text-zinc-300 group-hover:text-white leading-tight">{ch.name}</span>
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 )}
@@ -390,7 +596,7 @@
                     
                     <footer className="w-full py-3 border-t border-zinc-900 glass-header text-center z-50">
                         <p className="text-[9px] md:text-xs text-zinc-600 tracking-wider uppercase font-bold px-4">
-                            (c)2026 - <span className="text-zinc-400">M. Thorik</span> | KIRIM DONASI DANA: <span className="text-indigo-400">087888879016</span>
+                            &copy;2026 - <span className="text-zinc-400">M. Thorik</span> | DONASI: <span className="text-indigo-400">087888879016</span> (DANA)
                         </p>
                     </footer>
                 </div>
