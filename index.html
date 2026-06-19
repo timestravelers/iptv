@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>NovaTV — TV Langsung Gratis & Lokal</title>
+<title>EMTE-TV — TV Langsung Gratis & Lokal</title>
 <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.13/dist/hls.min.js"></script>
 <style>
   :root{
@@ -113,7 +113,7 @@
 <body>
 <div class="app">
   <div class="top">
-    <div class="brand"><span class="dot"></span>NovaTV <small>Langsung</small></div><span id="tvnav" style="display:flex;gap:6px;margin-left:4px"><a href="https://thorik78.vercel.app" style="color:#9fb3d9;text-decoration:none;font-size:13px;font-weight:600;white-space:nowrap;padding:6px 8px">&#8962; Beranda</a><a href="/" style="color:#9fb3d9;text-decoration:none;font-size:13px;font-weight:600;white-space:nowrap;padding:6px 8px">&#8801; Aplikasi</a></span>
+    <div class="brand"><span class="dot"></span>EMTE-TV <small>Langsung</small></div><span id="tvnav" style="display:flex;gap:6px;margin-left:4px"><a href="https://thorik78.vercel.app" style="color:#9fb3d9;text-decoration:none;font-size:13px;font-weight:600;white-space:nowrap;padding:6px 8px">&#8962; Beranda</a><a href="/" style="color:#9fb3d9;text-decoration:none;font-size:13px;font-weight:600;white-space:nowrap;padding:6px 8px">&#8801; Aplikasi</a></span>
     <div class="search">🔎<input id="q" placeholder="Cari saluran…" autocomplete="off"/></div>
     <div class="seg" id="countrySeg">
       <button data-c="ID" class="on">🇮🇩 ID</button>
@@ -197,7 +197,7 @@ const API='https://iptv-org.github.io/api/';
 const $=s=>document.querySelector(s);
 const video=$('#video');
 let ALL=[], view=[], selIdx=0, current=null, hls=null, numBuf='', numTimer=null;
-let favSet=new Set(JSON.parse(localStorage.getItem('novatv_favs')||'[]'));
+let favSet=new Set(JSON.parse(localStorage.getItem('EMTE-TV_favs')||'[]'));
 let countrySel='ID', activeFilter='all';
 
 const el={channels:$('#channels'),q:$('#q'),countrySeg:$('#countrySeg'),chips:$('#chips'),meta:$('#meta'),
@@ -241,7 +241,7 @@ async function boot(){
     [...el.countrySeg.children].forEach(b=>b.onclick=()=>{countrySel=b.dataset.c;
       [...el.countrySeg.children].forEach(x=>x.classList.toggle('on',x===b));selIdx=0;render();});
     render();
-    const last=localStorage.getItem('novatv_last'); if(last){const i=view.findIndex(c=>c.id===last); if(i>=0){selIdx=i;highlight();}}
+    const last=localStorage.getItem('EMTE-TV_last'); if(last){const i=view.findIndex(c=>c.id===last); if(i>=0){selIdx=i;highlight();}}
   }catch(e){ el.meta.textContent='Gagal memuat daftar saluran (periksa koneksi internet).'; console.error(e); }
 }
 
@@ -267,7 +267,7 @@ function buildChips(){
   [...el.chips.children].forEach(b=>b.onclick=()=>{activeFilter=b.dataset.k;buildChips();selIdx=0;render();});
 }
 function toggleFav(id){ favSet.has(id)?favSet.delete(id):favSet.add(id);
-  try{localStorage.setItem('novatv_favs',JSON.stringify([...favSet]));}catch(e){}
+  try{localStorage.setItem('EMTE-TV_favs',JSON.stringify([...favSet]));}catch(e){}
   buildChips(); renderList(); }
 function applyFilters(){
   let m=matches().filter(c=>c.state!=='dead');
@@ -339,7 +339,7 @@ function escapeHtml(s){return (s||'').replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&l
 
 function play(ch){
   if(!ch)return; current=ch;
-  try{localStorage.setItem('novatv_last',ch.id);}catch(e){}
+  try{localStorage.setItem('EMTE-TV_last',ch.id);}catch(e){}
   el.standby.style.display='none';
   el.overlay.style.display='flex'; el.overlay.lastChild.textContent='Mengatur '+ch.name+'…';
   el.nowName.textContent=ch.name; el.nowSub.textContent=`${ch.flag} ${ch.countryName} · ${ch.cats.slice(0,3).join(' · ')||'Langsung'}`;
@@ -397,7 +397,7 @@ const R={
       +'<script>var u='+JSON.stringify(ch.url)+';var v=document.getElementById("v");'
       +'if(u.indexOf(".m3u8")>-1&&window.Hls&&Hls.isSupported()){var h=new Hls();h.loadSource(u);h.attachMedia(v);h.on(Hls.Events.MANIFEST_PARSED,function(){v.play()});}'
       +'else{v.src=u;v.play();}<\/script></body></html>';
-    const w=window.open('','novatv_s2_'+Date.now(),'width=960,height=560');
+    const w=window.open('','EMTE-TV_s2_'+Date.now(),'width=960,height=560');
     if(!w){flashNum('Izinkan pop-up untuk layar kedua');return;}
     w.document.open(); w.document.write(html); w.document.close();
     flashNum('Membuka "'+ch.name+'" di jendela baru');
