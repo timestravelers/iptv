@@ -9,90 +9,167 @@
   :root{
     --bg:#070a0f; --panel:#10151e; --panel2:#161d29; --line:#222c3a;
     --txt:#e8edf6; --mut:#8b97ab; --accent:#1a73ff; --accent2:#39d0ff; --ok:#37d67a; --red:#ff4d4d;
-    --radius:16px;
+    --radius:16px; --glass:rgba(6,10,16,.72);
   }
-  *{box-sizing:border-box}
-  html,body{margin:0;height:100%;background:
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;background:
      radial-gradient(1200px 700px at 80% -10%, #16243f 0%, transparent 60%),
      radial-gradient(900px 600px at -10% 110%, #1a1430 0%, transparent 55%), var(--bg);
      color:var(--txt);font-family:-apple-system,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;overflow:hidden}
   .app{display:grid;grid-template-columns:330px 1fr 250px;grid-template-rows:64px 1fr;height:100vh;gap:14px;padding:14px}
-  /* top bar */
+
+  /* === TOP BAR === */
   .top{grid-column:1/4;display:flex;align-items:center;gap:16px;background:linear-gradient(180deg,#151c28,#10151e);
        border:1px solid var(--line);border-radius:var(--radius);padding:0 18px}
-  .brand{display:flex;align-items:center;gap:10px;font-weight:800;letter-spacing:.5px;font-size:20px}
-  .brand .dot{width:13px;height:13px;border-radius:50%;background:linear-gradient(135deg,var(--accent2),var(--accent));box-shadow:0 0 14px var(--accent2)}
+  .brand{display:flex;align-items:center;gap:10px;font-weight:800;letter-spacing:.5px;font-size:20px;white-space:nowrap}
+  .brand .dot{width:13px;height:13px;border-radius:50%;background:linear-gradient(135deg,var(--accent2),var(--accent));
+    box-shadow:0 0 14px var(--accent2);animation:pulse-dot 2s ease-in-out infinite}
+  @keyframes pulse-dot{0%,100%{box-shadow:0 0 14px var(--accent2)}50%{box-shadow:0 0 24px var(--accent2),0 0 6px var(--accent)}}
   .brand small{color:var(--mut);font-weight:600;font-size:11px;letter-spacing:2px;text-transform:uppercase}
-  .search{flex:1;max-width:520px;margin-left:8px;display:flex;align-items:center;gap:8px;background:#0c111a;border:1px solid var(--line);border-radius:12px;padding:9px 14px}
+  .search{flex:1;max-width:520px;margin-left:8px;display:flex;align-items:center;gap:8px;background:#0c111a;border:1px solid var(--line);border-radius:12px;padding:9px 14px;transition:border-color .2s}
+  .search:focus-within{border-color:var(--accent)}
   .search input{flex:1;background:none;border:0;outline:0;color:var(--txt);font-size:15px}
-  select{background:#0c111a;color:var(--txt);border:1px solid var(--line);border-radius:12px;padding:9px 12px;font-size:14px;outline:0;cursor:pointer}
-  .top .meta{margin-left:auto;color:var(--mut);font-size:12px;text-align:right;line-height:1.3}
-  /* channel list */
+  .search input::placeholder{color:#4a5568}
+  select{background:#0c111a;color:var(--txt);border:1px solid var(--line);border-radius:12px;padding:9px 12px;font-size:14px;outline:0;cursor:pointer;transition:border-color .2s}
+  select:hover{border-color:var(--accent)}
+  .top .meta{margin-left:auto;color:var(--mut);font-size:12px;text-align:right;line-height:1.4}
+
+  /* === CHANNEL LIST === */
   .list{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);display:flex;flex-direction:column;overflow:hidden}
   .list h3{margin:0;padding:14px 16px 10px;font-size:13px;letter-spacing:1.5px;color:var(--mut);text-transform:uppercase}
   .channels{overflow-y:auto;flex:1;padding:0 8px 8px}
-  .ch{display:flex;align-items:center;gap:12px;padding:9px 10px;border-radius:12px;cursor:pointer;transition:.12s}
+  .ch{display:flex;align-items:center;gap:12px;padding:9px 10px;border-radius:12px;cursor:pointer;transition:background .12s,outline .12s}
   .ch:hover{background:#192230}
-  .ch.sel{background:linear-gradient(90deg,rgba(26,115,255,.25),rgba(26,115,255,.05));outline:1px solid rgba(57,208,255,.4)}
-  .ch .logo{width:42px;height:42px;border-radius:10px;background:#0c111a;object-fit:contain;flex:none;display:flex;align-items:center;justify-content:center;font-weight:800;color:var(--accent2);font-size:16px;border:1px solid var(--line)}
-  .ch .info{min-width:0}
-  .ch .nm{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .ch .sub{font-size:11px;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  /* player */
+  .ch.sel{background:linear-gradient(90deg,rgba(26,115,255,.22),rgba(26,115,255,.04));outline:1px solid rgba(57,208,255,.35)}
+  .ch .logo{width:42px;height:42px;border-radius:10px;background:#0c111a;object-fit:contain;flex:none;display:flex;align-items:center;justify-content:center;font-weight:800;color:var(--accent2);font-size:16px;border:1px solid var(--line);overflow:hidden}
+  .ch .logo img{width:100%;height:100%;object-fit:contain}
+  .ch .info{min-width:0;flex:1}
+  .ch .nm{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:4px}
+  .ch .sub{font-size:11px;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+  .sdot{display:inline-block;width:8px;height:8px;border-radius:50%;flex-shrink:0}
+  .sdot.live{background:var(--ok);box-shadow:0 0 6px var(--ok)}
+  .sdot.dead{background:var(--red)}
+  .sdot.unk{background:#e6b53b}
+  .tag{font-size:10px;border-radius:6px;padding:1px 6px;vertical-align:middle;white-space:nowrap;font-weight:600}
+  .tag.net{color:#ffd27a;border:1px solid #5a4a25}
+  .tag.loc{color:#39d0ff;border:1px solid #2c4763}
+  .tag.qual{color:var(--ok);border:1px solid #1a5c3a;margin-left:4px}
+
+  /* === PLAYER STAGE === */
   .stage{display:flex;flex-direction:column;gap:12px;min-width:0}
   .screen{position:relative;flex:1;background:#000;border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;display:flex;align-items:center;justify-content:center}
-  video{width:100%;height:100%;object-fit:contain;background:#000}
-  .nowbar{display:flex;align-items:center;gap:14px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px 16px}
+  video{width:100%;height:100%;object-fit:contain;background:#000;transition:opacity .25s ease}
+  video.fading{opacity:0}
+
+  /* Bar bawah */
+  .nowbar{display:flex;align-items:center;gap:14px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px 16px;flex-wrap:wrap}
   .nowbar .big{font-size:18px;font-weight:700}
-  .nowbar .sub{color:var(--mut);font-size:12px}
-  .badge{margin-left:auto;font-size:11px;color:var(--mut);border:1px solid var(--line);border-radius:20px;padding:5px 12px}
-  .overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center;color:var(--mut);padding:20px}
+  .nowbar .sub{color:var(--mut);font-size:12px;margin-top:2px}
+  .badge{margin-left:auto;font-size:11px;color:var(--mut);border:1px solid var(--line);border-radius:20px;padding:5px 12px;white-space:nowrap}
+  .controls{display:flex;gap:6px;margin-left:auto;flex-wrap:wrap;width:100%;justify-content:flex-end;margin-top:4px}
+  .controls button{width:42px;height:42px;border-radius:11px;border:1px solid var(--line);
+    background:linear-gradient(180deg,#1d2632,#141a24);color:var(--txt);font-size:17px;cursor:pointer;transition:all .1s}
+  .controls button:hover{border-color:var(--accent);color:var(--accent2)}
+  .controls button:active{transform:translateY(1px);background:#101622}
+
+  /* Overlays di atas video */
+  .overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center;color:var(--mut);padding:20px;z-index:5}
   .spinner{width:46px;height:46px;border:4px solid #1d2735;border-top-color:var(--accent2);border-radius:50%;animation:spin 1s linear infinite}
   @keyframes spin{to{transform:rotate(360deg)}}
-  .standby{position:absolute;inset:0;background:#04060a;display:none;align-items:center;justify-content:center;color:#2a3645;font-size:14px;letter-spacing:3px}
-  .chOSD{position:absolute;top:18px;left:18px;background:rgba(6,10,16,.7);backdrop-filter:blur(8px);border:1px solid var(--line);border-radius:12px;padding:10px 16px;font-weight:700;opacity:0;transition:.3s}
-  .numOSD{position:absolute;top:18px;right:18px;background:rgba(6,10,16,.8);border:1px solid var(--accent);border-radius:12px;padding:8px 18px;font-size:30px;font-weight:800;color:var(--accent2);opacity:0;transition:.15s}
-  /* remote */
-  .remote{background:linear-gradient(180deg,#1b2230,#0d111a);border:1px solid #2a3543;border-radius:28px;padding:18px 16px;display:flex;flex-direction:column;align-items:center;gap:12px;box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 20px 50px rgba(0,0,0,.5);overflow-y:auto}
+  .standby{position:absolute;inset:0;background:#04060a;display:none;flex-direction:column;align-items:center;justify-content:center;gap:20px;z-index:6}
+  .standby .clock{font-size:64px;font-weight:200;letter-spacing:6px;color:#1e2a3a;font-variant-numeric:tabular-nums}
+  .standby .slabel{font-size:13px;letter-spacing:4px;color:#1a2332;text-transform:uppercase}
+  .standby .ring{width:80px;height:80px;border-radius:50%;border:2px solid #151e2a;position:relative}
+  .standby .ring::after{content:'';position:absolute;inset:8px;border-radius:50%;border:1px solid #0f1620;animation:breathe 4s ease-in-out infinite}
+  @keyframes breathe{0%,100%{opacity:.3;transform:scale(.95)}50%{opacity:.8;transform:scale(1.05)}}
+  .chOSD{position:absolute;top:18px;left:18px;background:var(--glass);backdrop-filter:blur(10px);border:1px solid var(--line);border-radius:12px;padding:10px 16px;font-weight:700;font-size:15px;opacity:0;transition:opacity .35s;z-index:10;pointer-events:none}
+  .numOSD{position:absolute;top:18px;right:18px;background:rgba(6,10,16,.82);backdrop-filter:blur(10px);border:1px solid var(--accent);border-radius:12px;padding:8px 18px;font-size:30px;font-weight:800;color:var(--accent2);opacity:0;transition:opacity .15s;z-index:10;pointer-events:none}
+
+  /* Volume bar */
+  .vol-wrap{position:absolute;bottom:24px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:12px;
+    background:var(--glass);backdrop-filter:blur(10px);border:1px solid var(--line);border-radius:14px;padding:10px 20px;
+    opacity:0;transition:opacity .25s;z-index:10;pointer-events:none;white-space:nowrap}
+  .vol-wrap.show{opacity:1}
+  .vol-track{width:180px;height:6px;background:#1a2230;border-radius:3px;overflow:hidden;position:relative}
+  .vol-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:3px;transition:width .12s}
+  .vol-label{font-size:13px;font-weight:700;color:var(--txt);min-width:38px;text-align:right}
+
+  /* Toast */
+  .toast-box{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:999;display:flex;flex-direction:column-reverse;gap:8px;pointer-events:none}
+  .toast{background:rgba(16,21,30,.92);backdrop-filter:blur(12px);border:1px solid var(--line);border-radius:12px;
+    padding:10px 18px;font-size:13px;font-weight:600;color:var(--txt);box-shadow:0 8px 30px rgba(0,0,0,.5);
+    animation:toast-in .3s ease forwards;white-space:nowrap}
+  .toast.out{animation:toast-out .25s ease forwards}
+  @keyframes toast-in{from{opacity:0;transform:translateY(16px) scale(.95)}to{opacity:1;transform:translateY(0) scale(1)}}
+  @keyframes toast-out{to{opacity:0;transform:translateY(-10px) scale(.95)}}
+
+  /* Keyboard help */
+  .help-bg{position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);z-index:900;display:none;align-items:center;justify-content:center}
+  .help-bg.show{display:flex}
+  .help-card{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:28px 32px;max-width:520px;width:90%;max-height:80vh;overflow-y:auto}
+  .help-card h2{font-size:18px;font-weight:800;margin-bottom:16px}
+  .help-card table{width:100%;border-collapse:collapse;font-size:13px}
+  .help-card td{padding:5px 0;border-bottom:1px solid var(--line)}
+  .help-card td:first-child{color:var(--accent2);font-weight:700;font-family:monospace;width:110px;white-space:nowrap}
+  .help-card td:last-child{color:var(--mut)}
+  .help-close{margin-top:18px;width:100%;padding:10px;border-radius:12px;border:1px solid var(--line);background:var(--panel2);color:var(--txt);font-size:14px;font-weight:600;cursor:pointer}
+  .help-close:hover{border-color:var(--accent)}
+
+  /* === REMOTE === */
+  .remote{background:linear-gradient(180deg,#1b2230,#0d111a);border:1px solid #2a3543;border-radius:28px;padding:18px 16px;
+    display:flex;flex-direction:column;align-items:center;gap:12px;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 20px 50px rgba(0,0,0,.5);overflow-y:auto}
   .remote .rb{font-size:10px;letter-spacing:3px;color:var(--mut);font-weight:700}
-  .btn{width:100%;border:1px solid #2c3848;background:linear-gradient(180deg,#222c3b,#161d28);color:var(--txt);border-radius:12px;padding:10px;font-size:13px;font-weight:600;cursor:pointer;transition:.08s;display:flex;align-items:center;justify-content:center;gap:6px}
-  .btn:hover{border-color:var(--accent)}
+  .btn{width:100%;border:1px solid #2c3848;background:linear-gradient(180deg,#222c3b,#161d28);color:var(--txt);
+    border-radius:12px;padding:10px;font-size:13px;font-weight:600;cursor:pointer;transition:.08s;
+    display:flex;align-items:center;justify-content:center;gap:6px}
+  .btn:hover{border-color:var(--accent);color:var(--accent2)}
   .btn:active{transform:translateY(1px);background:#101622}
   .row{display:flex;gap:8px;width:100%}
-  .power{width:46px;height:46px;border-radius:50%;border:1px solid #3a2530;background:radial-gradient(circle at 50% 35%,#2a1820,#140d11);color:var(--red);font-size:18px;align-self:flex-end}
+  .power{width:46px;height:46px;border-radius:50%;border:1px solid #3a2530;background:radial-gradient(circle at 50% 35%,#2a1820,#140d11);
+    color:var(--red);font-size:18px;align-self:flex-end;cursor:pointer;transition:.15s}
+  .power:hover{background:radial-gradient(circle at 50% 35%,#3a2028,#1e1215);box-shadow:0 0 16px rgba(255,77,77,.3)}
   .dpad{position:relative;width:170px;height:170px;border-radius:50%;background:radial-gradient(circle at 50% 40%,#202a39,#11161f);border:1px solid #2c3848;display:grid;place-items:center}
-  .dpad button{position:absolute;background:none;border:0;color:var(--txt);font-size:18px;cursor:pointer;width:48px;height:48px;border-radius:10px}
+  .dpad button{position:absolute;background:none;border:0;color:var(--txt);font-size:18px;cursor:pointer;width:48px;height:48px;border-radius:10px;transition:color .1s}
   .dpad button:hover{color:var(--accent2)}
   .dpad .up{top:6px}.dpad .down{bottom:6px}.dpad .left{left:6px}.dpad .right{right:6px}
-  .dpad .ok{width:72px;height:72px;border-radius:50%;background:linear-gradient(180deg,#1a73ff,#0c3ea0);color:#fff;font-weight:800;font-size:15px;box-shadow:0 6px 18px rgba(26,115,255,.45)}
+  .dpad .ok{width:72px;height:72px;border-radius:50%;background:linear-gradient(180deg,#1a73ff,#0c3ea0);color:#fff;
+    font-weight:800;font-size:15px;box-shadow:0 6px 18px rgba(26,115,255,.45);cursor:pointer;transition:transform .1s}
+  .dpad .ok:active{transform:scale(.94)}
   .rocker{flex:1;display:flex;flex-direction:column;border:1px solid #2c3848;border-radius:30px;overflow:hidden}
-  .rocker button{background:linear-gradient(180deg,#222c3b,#161d28);border:0;color:var(--txt);padding:10px;font-size:16px;cursor:pointer}
+  .rocker button{background:linear-gradient(180deg,#222c3b,#161d28);border:0;color:var(--txt);padding:10px;font-size:16px;cursor:pointer;transition:color .1s}
   .rocker button:hover{color:var(--accent2)}
   .rocker .lbl{font-size:9px;letter-spacing:2px;color:var(--mut);text-align:center;padding:4px 0;background:#0d121b}
   .pad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;width:100%}
-  .pad button{aspect-ratio:1.4;border:1px solid #2c3848;background:linear-gradient(180deg,#1d2632,#141a24);color:var(--txt);border-radius:10px;font-size:16px;font-weight:700;cursor:pointer}
-  .pad button:hover{border-color:var(--accent)}
+  .pad button{aspect-ratio:1.4;border:1px solid #2c3848;background:linear-gradient(180deg,#1d2632,#141a24);color:var(--txt);
+    border-radius:10px;font-size:16px;font-weight:700;cursor:pointer;transition:all .1s}
+  .pad button:hover{border-color:var(--accent);color:var(--accent2)}
   .seg{display:flex;background:#0c111a;border:1px solid var(--line);border-radius:12px;overflow:hidden}
-  .seg button{background:none;border:0;color:var(--mut);padding:9px 13px;font-size:14px;font-weight:700;cursor:pointer}
+  .seg button{background:none;border:0;color:var(--mut);padding:9px 13px;font-size:14px;font-weight:700;cursor:pointer;transition:all .12s}
   .seg button.on{background:linear-gradient(180deg,#1f6bff,#0c3ea0);color:#fff}
+  .seg button:hover:not(.on){color:var(--txt)}
   .lpad{padding:12px 12px 4px;border-bottom:1px solid var(--line)}
   .chips{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:8px}
-  .chip{background:#0e141e;border:1px solid var(--line);color:var(--mut);border-radius:999px;padding:7px 13px;font-size:13px;font-weight:700;cursor:pointer;transition:.12s}
+  .chip{background:#0e141e;border:1px solid var(--line);color:var(--mut);border-radius:999px;padding:7px 13px;
+    font-size:13px;font-weight:700;cursor:pointer;transition:.12s;white-space:nowrap}
   .chip:hover{border-color:var(--accent);color:var(--txt)}
   .chip.on{background:linear-gradient(180deg,#22324a,#16202e);color:#fff;border-color:var(--accent2);box-shadow:inset 0 0 0 1px rgba(57,208,255,.35)}
   .lhead{font-size:11px;letter-spacing:1.5px;color:var(--mut);text-transform:uppercase;padding:2px 2px 8px}
-  .star{margin-left:auto;background:none;border:0;color:#3a4658;font-size:20px;cursor:pointer;flex:none;padding:2px 4px;line-height:1}
+  .star{margin-left:auto;background:none;border:0;color:#3a4658;font-size:20px;cursor:pointer;flex:none;padding:2px 4px;line-height:1;transition:all .15s}
   .star:hover{color:#ffcf4d;transform:scale(1.15)}
   .star.on{color:#ffcf4d;text-shadow:0 0 10px rgba(255,207,77,.5)}
-  .channels::-webkit-scrollbar,.remote::-webkit-scrollbar{width:8px}
-  .channels::-webkit-scrollbar-thumb,.remote::-webkit-scrollbar-thumb{background:#243040;border-radius:8px}
-  /* always-visible quick controls (great on phones where the remote is hidden) */
-  .controls{display:flex;gap:6px;margin-left:auto;flex-wrap:wrap}
-  .controls button{width:42px;height:42px;border-radius:11px;border:1px solid var(--line);background:linear-gradient(180deg,#1d2632,#141a24);color:var(--txt);font-size:17px;cursor:pointer}
-  .controls button:hover{border-color:var(--accent)}
-  .controls button:active{transform:translateY(1px)}
+
+  /* Scrollbar */
+  .channels::-webkit-scrollbar,.remote::-webkit-scrollbar{width:6px}
+  .channels::-webkit-scrollbar-track{background:transparent}
+  .channels::-webkit-scrollbar-thumb,.remote::-webkit-scrollbar-thumb{background:#243040;border-radius:6px}
+
+  /* Nav links */
+  #tvnav a{transition:color .15s}
+  #tvnav a:hover{color:var(--accent2)!important}
+
+  /* Responsif */
   @media(max-width:1100px){.app{grid-template-columns:300px 1fr}.remote{display:none}}
-  /* phone layout */
   @media(max-width:760px){
     html,body{overflow:auto}
     .app{display:flex;flex-direction:column;height:auto;min-height:100dvh;padding:8px;gap:8px}
@@ -101,341 +178,703 @@
     .search{order:9;flex-basis:100%;max-width:none}
     .top select{flex:1;min-width:120px}
     .top .meta{display:none}
+    #tvnav{display:none!important}
     .stage{order:2}
     .screen{height:32vh;min-height:200px}
     .nowbar{flex-wrap:wrap}
     .controls{width:100%;justify-content:space-between;margin-top:8px}
     .controls button{flex:1}
     .list{order:3;min-height:46vh}
+    .vol-track{width:120px}
   }
 </style>
 </head>
 <body>
 <div class="app">
+  <!-- Top bar -->
   <div class="top">
-    <div class="brand"><span class="dot"></span>EMTE-TV <small>Langsung</small></div><span id="tvnav" style="display:flex;gap:6px;margin-left:4px"><a href="https://thorik78.vercel.app" style="color:#9fb3d9;text-decoration:none;font-size:13px;font-weight:600;white-space:nowrap;padding:6px 8px">&#8962; Beranda</a><a href="/" style="color:#9fb3d9;text-decoration:none;font-size:13px;font-weight:600;white-space:nowrap;padding:6px 8px">&#8801; Aplikasi</a></span>
-    <div class="search">🔎<input id="q" placeholder="Cari saluran…" autocomplete="off"/></div>
+    <div class="brand"><span class="dot"></span>EMTE-TV <small>Langsung</small></div>
+    <span id="tvnav" style="display:flex;gap:6px;margin-left:4px">
+      <a href="https://thorik78.vercel.app" style="color:#9fb3d9;text-decoration:none;font-size:13px;font-weight:600;white-space:nowrap;padding:6px 8px">&#8962; Beranda</a>
+      <a href="/" style="color:#9fb3d9;text-decoration:none;font-size:13px;font-weight:600;white-space:nowrap;padding:6px 8px">&#8801; Aplikasi</a>
+    </span>
+    <div class="search">
+      <span style="color:var(--mut);font-size:15px">&#128269;</span>
+      <input id="q" placeholder="Cari saluran…" autocomplete="off"/>
+    </div>
     <div class="seg" id="countrySeg">
       <button data-c="ID" class="on">🇮🇩 ID</button>
       <button data-c="US">🇺🇸 US</button>
       <button data-c="UK">🇬🇧 UK</button>
       <button data-c="BOTH">Semua</button>
     </div>
-    <label style="display:flex;align-items:center;gap:6px;color:var(--mut);font-size:12px;cursor:pointer;white-space:nowrap"><input type="checkbox" id="vonly" checked> Hanya terverifikasi</label>
+    <label style="display:flex;align-items:center;gap:6px;color:var(--mut);font-size:12px;cursor:pointer;white-space:nowrap">
+      <input type="checkbox" id="vonly" checked> Hanya terverifikasi
+    </label>
     <div class="meta" id="meta">Memuat saluran…</div>
   </div>
 
+  <!-- Daftar saluran -->
   <div class="list">
-    <div class="lpad"><div class="chips" id="chips"></div><div class="lhead" id="listhead">Saluran</div></div>
+    <div class="lpad">
+      <div class="chips" id="chips"></div>
+      <div class="lhead" id="listhead">Saluran</div>
+    </div>
     <div class="channels" id="channels"></div>
   </div>
 
+  <!-- Pemutar -->
   <div class="stage">
-    <div class="screen">
+    <div class="screen" id="screen">
       <video id="video" playsinline x-webkit-airplay="allow"></video>
-      <div class="standby" id="standby">SIAGA</div>
+      <div class="standby" id="standby">
+        <div class="ring"></div>
+        <div class="clock" id="sbClock">--:--</div>
+        <div class="slabel">Siaga</div>
+      </div>
       <div class="chOSD" id="chosd"></div>
       <div class="numOSD" id="numosd"></div>
-      <div class="overlay" id="overlay"><div class="spinner"></div><div>Pilih saluran untuk mulai menonton</div></div>
+      <div class="vol-wrap" id="volWrap">
+        <span style="font-size:16px" id="volIcon">&#128264;</span>
+        <div class="vol-track"><div class="vol-fill" id="volFill" style="width:100%"></div></div>
+        <div class="vol-label" id="volLabel">100</div>
+      </div>
+      <div class="overlay" id="overlay">
+        <div class="spinner"></div>
+        <div>Pilih saluran untuk mulai menonton</div>
+      </div>
     </div>
     <div class="nowbar">
-      <div><div class="big" id="nowName">Tidak ada saluran</div><div class="sub" id="nowSub">TV langsung gratis & lokal · siaran publik</div></div>
+      <div style="min-width:0;flex:1">
+        <div class="big" id="nowName">Tidak ada saluran</div>
+        <div class="sub" id="nowSub">TV langsung gratis & lokal · siaran publik</div>
+      </div>
       <div class="badge" id="nowBadge">—</div>
       <div class="controls">
-        <button onclick="R.chan(-1)" title="Saluran sebelumnya">⏮</button>
-        <button onclick="R.playpause()" title="Putar / Jeda">⏯</button>
-        <button onclick="R.chan(1)" title="Saluran berikutnya">⏭</button>
-        <button onclick="R.mute()" title="Bisukan">🔇</button>
-        <button onclick="R.cast()" title="Siaran ke TV">📺</button>
-        <button onclick="R.pip()" title="Jendela mengambang">🗗</button>
-        <button onclick="R.screen2()" title="Buka saluran ini di jendela kedua">⧉</button>
-        <button onclick="R.full()" title="Layar penuh">⛶</button>
+        <button onclick="R.chan(-1)" title="Saluran sebelumnya (PgUp)">&#9198;</button>
+        <button onclick="R.playpause()" title="Putar / Jeda (Spasi)">&#9208;</button>
+        <button onclick="R.chan(1)" title="Saluran berikutnya (PgDn)">&#9197;</button>
+        <button onclick="R.mute()" title="Bisukan (M)">&#128263;</button>
+        <button onclick="R.cast()" title="Siaran ke TV (C)">&#128250;</button>
+        <button onclick="R.pip()" title="Jendela mengambang (P)">&#128425;</button>
+        <button onclick="R.screen2()" title="Layar kedua">&#9047;</button>
+        <button onclick="R.full()" title="Layar penuh (F)">&#9974;</button>
+        <button onclick="R.help()" title="Bantuan (?)">?</button>
       </div>
     </div>
   </div>
 
+  <!-- Remote -->
   <div class="remote">
-    <button class="power btn" title="Siaga" onclick="R.power()">⏻</button>
+    <button class="power" title="Siaga" onclick="R.power()">&#9211;</button>
     <div class="rb">NOVA · REMOTE</div>
     <div class="dpad">
-      <button class="up" onclick="R.nav(-1)">▲</button>
-      <button class="down" onclick="R.nav(1)">▼</button>
-      <button class="left" onclick="R.side(-1)">◄</button>
-      <button class="right" onclick="R.side(1)">►</button>
+      <button class="up" onclick="R.nav(-1)">&#9650;</button>
+      <button class="down" onclick="R.nav(1)">&#9660;</button>
+      <button class="left" onclick="R.side(-1)">&#9664;</button>
+      <button class="right" onclick="R.side(1)">&#9654;</button>
       <button class="ok" onclick="R.ok()">OK</button>
     </div>
     <div class="row">
-      <div class="rocker"><button onclick="R.vol(.1)">＋</button><div class="lbl">VOL</div><button onclick="R.vol(-.1)">－</button></div>
-      <div class="rocker"><button onclick="R.chan(-1)">∧</button><div class="lbl">CH</div><button onclick="R.chan(1)">∨</button></div>
+      <div class="rocker"><button onclick="R.vol(.1)">&#65291;</button><div class="lbl">VOL</div><button onclick="R.vol(-.1)">&#65293;</button></div>
+      <div class="rocker"><button onclick="R.chan(-1)">&#8743;</button><div class="lbl">CH</div><button onclick="R.chan(1)">&#8744;</button></div>
     </div>
     <div class="row">
-      <button class="btn" onclick="R.mute()">🔇 Bisukan</button>
-      <button class="btn" onclick="R.guide()">☰ Panduan</button>
+      <button class="btn" onclick="R.mute()">&#128263; Bisukan</button>
+      <button class="btn" onclick="R.guide()">&#9776; Panduan</button>
     </div>
     <div class="pad">
       <button onclick="R.num(1)">1</button><button onclick="R.num(2)">2</button><button onclick="R.num(3)">3</button>
       <button onclick="R.num(4)">4</button><button onclick="R.num(5)">5</button><button onclick="R.num(6)">6</button>
       <button onclick="R.num(7)">7</button><button onclick="R.num(8)">8</button><button onclick="R.num(9)">9</button>
-      <button onclick="R.back()">↩</button><button onclick="R.num(0)">0</button><button onclick="R.home()">⌂</button>
+      <button onclick="R.back()">&#8617;</button><button onclick="R.num(0)">0</button><button onclick="R.home()">&#8962;</button>
     </div>
     <div class="row">
-      <button class="btn" id="ppBtn" onclick="R.playpause()">⏸ Jeda</button>
-      <button class="btn" onclick="R.cast()">📺 Siarkan</button>
+      <button class="btn" id="ppBtn" onclick="R.playpause()">&#9208; Jeda</button>
+      <button class="btn" onclick="R.cast()">&#128250; Siarkan</button>
     </div>
     <div class="row">
-      <button class="btn" onclick="R.full()">⛶ Layar Penuh</button>
-      <button class="btn" onclick="R.pip()">🗗 Cermin</button>
+      <button class="btn" onclick="R.full()">&#9974; Layar Penuh</button>
+      <button class="btn" onclick="R.pip()">&#128425; Cermin</button>
     </div>
     <div class="row">
-      <button class="btn" onclick="R.screen2()">⧉ Layar Kedua</button>
+      <button class="btn" onclick="R.screen2()">&#9047; Layar Kedua</button>
     </div>
   </div>
 </div>
 
+<!-- Toast container -->
+<div class="toast-box" id="toasts"></div>
+
+<!-- Keyboard help -->
+<div class="help-bg" id="helpBg" onclick="if(event.target===this)R.help()">
+  <div class="help-card">
+    <h2>&#9000; Pintasan Keyboard</h2>
+    <table>
+      <tr><td>&#8593; &#8595;</td><td>Navigasi daftar saluran</td></tr>
+      <tr><td>&#8592; &#8594;</td><td>Geser cepat (10 saluran)</td></tr>
+      <tr><td>Enter</td><td>Pilih / putar saluran</td></tr>
+      <tr><td>PgUp / PgDn</td><td>Saluran sebelumnya / berikutnya</td></tr>
+      <tr><td>Spasi / K</td><td>Putar / Jeda</td></tr>
+      <tr><td>+ / -</td><td>Naikkan / turunkan volume</td></tr>
+      <tr><td>M</td><td>Bisukan / suarakan</td></tr>
+      <tr><td>F</td><td>Layar penuh</td></tr>
+      <tr><td>P</td><td>Jendela mengambang (PiP)</td></tr>
+      <tr><td>C</td><td>Siaran ke perangkat TV</td></tr>
+      <tr><td>0 – 9</td><td>Input nomor saluran</td></tr>
+      <tr><td>?</td><td>Tampilkan bantuan ini</td></tr>
+      <tr><td>Esc</td><td>Tutup bantuan / keluar layar penuh</td></tr>
+    </table>
+    <button class="help-close" onclick="R.help()">Tutup</button>
+  </div>
+</div>
+
 <script>
-const API='https://iptv-org.github.io/api/';
-const $=s=>document.querySelector(s);
-const video=$('#video');
-let ALL=[], view=[], selIdx=0, current=null, hls=null, numBuf='', numTimer=null;
-let favSet=new Set(JSON.parse(localStorage.getItem('EMTE-TV_favs')||'[]'));
-let countrySel='ID', activeFilter='all';
+/* ============================================================
+   EMTE-TV — TV Langsung Gratis & Lokal
+   Menggunakan data publik dari iptv-org
+   ============================================================ */
 
-const el={channels:$('#channels'),q:$('#q'),countrySeg:$('#countrySeg'),chips:$('#chips'),meta:$('#meta'),
-  overlay:$('#overlay'),standby:$('#standby'),nowName:$('#nowName'),nowSub:$('#nowSub'),nowBadge:$('#nowBadge'),
-  chosd:$('#chosd'),numosd:$('#numosd'),listhead:$('#listhead'),vonly:$('#vonly')};
+const API = 'https://iptv-org.github.io/api/';
+const $ = s => document.querySelector(s);
+const video = $('#video');
 
-async function boot(){
-  try{
-    const [countries,categories,channels,streams]=await Promise.all(
-      ['countries.json','categories.json','channels.json','streams.json'].map(f=>fetch(API+f).then(r=>r.json())));
-    const catName={}; categories.forEach(c=>catName[c.id]=c.name);
-    const co={}; countries.forEach(c=>co[c.code]={name:c.name,flag:c.flag});
-    // map channel -> best stream url
-    const sByCh={};
-    for(const s of streams){ if(!s.channel||!s.url) continue; (sByCh[s.channel]=sByCh[s.channel]||[]).push(s.url); }
-    const pick=urls=>{ const https=urls.filter(u=>u.startsWith('https')); const m3u8=(https.length?https:urls).filter(u=>u.includes('.m3u8')); return (m3u8[0]||https[0]||urls[0]); };
-    // Saluran lokal Indonesia (contoh umum)
-    const LOCAL_ID=/\b(RCTI|MNCTV|GTV|ANTV|Trans7|TransTV|NET\.TV|MetroTV|TVRI|RCTI\+|INews|KompasTV|CNNIndonesia|BTV|RTV|OChannel)\b/i;
-    ALL = channels.filter(c=>!c.is_nsfw && sByCh[c.id] && (['ID','US','UK'].includes(c.country))).map(c=>({
-      id:c.id,name:c.name,logo:c.logo,country:c.country,
-      cats:(c.categories||[]).map(id=>catName[id]).filter(Boolean),
-      flag:(co[c.country]||{}).flag||(c.country==='ID'?'🇮🇩':(c.country==='UK'?'🇬🇧':'🌐')), 
-      countryName:(co[c.country]||{}).name||c.country,
-      url:pick(sByCh[c.id]), state:'unknown',
-      local: c.country==='ID' && LOCAL_ID.test((c.name||'')+' '+((c.alt_names||[]).join(' '))),
-      network: c.network||'', alt:(c.alt_names||[])[0]||''
-    }));
-    // Tambahkan saluran Indonesia manual (opsional)
-    ALL.push({
-      id:'tvri-nasional', name:'TVRI Nasional', logo:'',
-      country:'ID', cats:['Berita'], flag:'🇮🇩', countryName:'Indonesia',
-      url:'https://tvridigital-lh.akamaihd.net/i/tvrinasional_1@358927/master.m3u8',
-      state:'unknown', local:true, network:'TVRI', alt:'Saluran nasional'
-    },{
-      id:'kompas-tv', name:'Kompas TV', logo:'',
-      country:'ID', cats:['Berita'], flag:'🇮🇩', countryName:'Indonesia',
-      url:'https://kompastv-live.stream.kata.ai/kompastv/sa_dash_vmx/index.m3u8',
-      state:'unknown', local:true, network:'KompasTV', alt:'Berita terkini'
-    });
-    buildChips();
-    [...el.countrySeg.children].forEach(b=>b.onclick=()=>{countrySel=b.dataset.c;
-      [...el.countrySeg.children].forEach(x=>x.classList.toggle('on',x===b));selIdx=0;render();});
-    render();
-    const last=localStorage.getItem('EMTE-TV_last'); if(last){const i=view.findIndex(c=>c.id===last); if(i>=0){selIdx=i;highlight();}}
-  }catch(e){ el.meta.textContent='Gagal memuat daftar saluran (periksa koneksi internet).'; console.error(e); }
+let ALL = [], view = [], selIdx = 0, current = null, hls = null;
+let numBuf = '', numTimer = null;
+let favSet = new Set(JSON.parse(localStorage.getItem('EMTE-TV_favs') || '[]'));
+let countrySel = 'ID', activeFilter = 'all';
+
+/* Elemen DOM */
+const el = {
+  channels: $('#channels'), q: $('#q'), countrySeg: $('#countrySeg'),
+  chips: $('#chips'), meta: $('#meta'), overlay: $('#overlay'),
+  standby: $('#standby'), sbClock: $('#sbClock'),
+  nowName: $('#nowName'), nowSub: $('#nowSub'), nowBadge: $('#nowBadge'),
+  chosd: $('#chosd'), numosd: $('#numosd'), listhead: $('#listhead'),
+  vonly: $('#vonly'), volWrap: $('#volWrap'), volFill: $('#volFill'),
+  volLabel: $('#volLabel'), volIcon: $('#volIcon'),
+  toasts: $('#toasts'), helpBg: $('#helpBg'), screen: $('#screen')
+};
+
+/* ---- Jam di layar siaga ---- */
+function tickClock() {
+  const d = new Date();
+  el.sbClock.textContent = String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+}
+tickClock();
+setInterval(tickClock, 10000);
+
+/* ---- Sistem Toast ---- */
+function toast(msg, duration) {
+  duration = duration || 2500;
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.textContent = msg;
+  el.toasts.appendChild(t);
+  setTimeout(() => { t.classList.add('out'); setTimeout(() => t.remove(), 260); }, duration);
 }
 
-let verifiedOnly=true, verifying=false, scanned=0, scanTotal=0;
-const VERIFY_CAP=180;
+/* ---- Indikator Volume ---- */
+let volHideTimer = null;
+function showVol() {
+  const v = video.muted ? 0 : video.volume;
+  const pct = Math.round(v * 100);
+  el.volFill.style.width = pct + '%';
+  el.volLabel.textContent = video.muted ? 'MUT' : pct;
+  el.volIcon.innerHTML = video.muted ? '&#128263;' : (pct === 0 ? '&#128263;' : (pct < 50 ? '&#128265;' : '&#128264;'));
+  el.volWrap.classList.add('show');
+  clearTimeout(volHideTimer);
+  volHideTimer = setTimeout(() => el.volWrap.classList.remove('show'), 1200);
+}
 
-function matches(){
-  const q=el.q.value.trim().toLowerCase();
-  const cs=countrySel==='BOTH'?['ID','US','UK']:[countrySel];
-  return ALL.filter(c=>{
-    if(!cs.includes(c.country))return false;
-    if(q && !c.name.toLowerCase().includes(q))return false;
-    if(activeFilter==='local')return c.local;
-    if(activeFilter==='fav')return favSet.has(c.id);
-    if(activeFilter!=='all')return c.cats.includes(activeFilter);
+/* ---- Flash OSD angka ---- */
+function flashNum(t) {
+  el.numosd.textContent = t;
+  el.numosd.style.opacity = '1';
+  clearTimeout(numTimer);
+  numTimer = setTimeout(() => el.numosd.style.opacity = '0', 900);
+}
+
+/* ---- Escape HTML ---- */
+function esc(s) { return (s || '').replace(/[&<>"]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[m])); }
+
+/* ============================================================
+   DATA — Ambil dari iptv-org API
+   ============================================================ */
+async function boot() {
+  try {
+    const [countries, categories, channels, streams] = await Promise.all(
+      ['countries.json', 'categories.json', 'channels.json', 'streams.json']
+        .map(f => fetch(API + f).then(r => r.json()))
+    );
+    const catName = {};
+    categories.forEach(c => catName[c.id] = c.name);
+    const co = {};
+    countries.forEach(c => co[c.code] = { name: c.name, flag: c.flag });
+
+    /* Pilih stream terbaik per saluran */
+    const sByCh = {};
+    for (const s of streams) {
+      if (!s.channel || !s.url) continue;
+      (sByCh[s.channel] = sByCh[s.channel] || []).push(s.url);
+    }
+    const pick = urls => {
+      const https = urls.filter(u => u.startsWith('https'));
+      const m3u8 = (https.length ? https : urls).filter(u => u.includes('.m3u8'));
+      return m3u8[0] || https[0] || urls[0];
+    };
+
+    /* Regex saluran lokal Indonesia yang dikenal */
+    const LOCAL_ID = /\b(RCTI|MNCTV|GTV|ANTV|Trans7|TransTV|NET\.TV|MetroTV|TVRI|RCTI\+|INews|KompasTV|CNNIndonesia|BTV|RTV|OChannel)\b/i;
+
+    ALL = channels.filter(c =>
+      !c.is_nsfw && sByCh[c.id] && ['ID', 'US', 'UK'].includes(c.country)
+    ).map(c => ({
+      id: c.id, name: c.name, logo: c.logo, country: c.country,
+      cats: (c.categories || []).map(id => catName[id]).filter(Boolean),
+      flag: (co[c.country] || {}).flag || (c.country === 'ID' ? '🇮🇩' : (c.country === 'UK' ? '🇬🇧' : '🌐')),
+      countryName: (co[c.country] || {}).name || c.country,
+      url: pick(sByCh[c.id]), state: 'unknown',
+      local: c.country === 'ID' && LOCAL_ID.test((c.name || '') + ' ' + ((c.alt_names || []).join(' '))),
+      network: c.network || '', alt: (c.alt_names || [])[0] || ''
+    }));
+
+    /* Saluran Indonesia manual sebagai fallback */
+    ALL.push(
+      { id: 'tvri-nasional', name: 'TVRI Nasional', logo: '', country: 'ID', cats: ['Berita'],
+        flag: '🇮🇩', countryName: 'Indonesia',
+        url: 'https://tvridigital-lh.akamaihd.net/i/tvrinasional_1@358927/master.m3u8',
+        state: 'unknown', local: true, network: 'TVRI', alt: 'Saluran nasional' },
+      { id: 'kompas-tv', name: 'Kompas TV', logo: '', country: 'ID', cats: ['Berita'],
+        flag: '🇮🇩', countryName: 'Indonesia',
+        url: 'https://kompastv-live.stream.kata.ai/kompastv/sa_dash_vmx/index.m3u8',
+        state: 'unknown', local: true, network: 'KompasTV', alt: 'Berita terkini' }
+    );
+
+    buildChips();
+
+    [...el.countrySeg.children].forEach(b => b.onclick = () => {
+      countrySel = b.dataset.c;
+      [...el.countrySeg.children].forEach(x => x.classList.toggle('on', x === b));
+      selIdx = 0; render();
+    });
+
+    render();
+
+    /* Kembalikan saluran terakhir yang ditonton */
+    const last = localStorage.getItem('EMTE-TV_last');
+    if (last) {
+      const i = view.findIndex(c => c.id === last);
+      if (i >= 0) { selIdx = i; highlight(); }
+    }
+  } catch (e) {
+    el.meta.textContent = 'Gagal memuat daftar saluran (periksa koneksi internet).';
+    console.error(e);
+  }
+}
+
+/* ============================================================
+   FILTER & RENDER
+   ============================================================ */
+let verifiedOnly = true, verifying = false, scanned = 0, scanTotal = 0;
+const VERIFY_CAP = 180;
+
+function matches() {
+  const q = el.q.value.trim().toLowerCase();
+  const cs = countrySel === 'BOTH' ? ['ID', 'US', 'UK'] : [countrySel];
+  return ALL.filter(c => {
+    if (!cs.includes(c.country)) return false;
+    if (q && !c.name.toLowerCase().includes(q)) return false;
+    if (activeFilter === 'local') return c.local;
+    if (activeFilter === 'fav') return favSet.has(c.id);
+    if (activeFilter !== 'all') return c.cats.includes(activeFilter);
     return true;
   });
 }
-function buildChips(){
-  const cats=['Berita','Olahraga','Film','Hiburan','Dokumenter','Musik','Anak','Gaya Hidup','Bisnis','Komedi','Cuaca'].filter(cat=>ALL.some(c=>c.cats.includes(cat)));
-  const items=[{k:'all',l:'Semua'},{k:'local',l:'📍 Lokal'},{k:'fav',l:`⭐ Favorit${favSet.size?` (${favSet.size})`:''}`},...cats.map(c=>({k:c,l:c}))];
-  el.chips.innerHTML=items.map(it=>`<button class="chip ${activeFilter===it.k?'on':''}" data-k="${it.k}">${it.l}</button>`).join('');
-  [...el.chips.children].forEach(b=>b.onclick=()=>{activeFilter=b.dataset.k;buildChips();selIdx=0;render();});
-}
-function toggleFav(id){ favSet.has(id)?favSet.delete(id):favSet.add(id);
-  try{localStorage.setItem('EMTE-TV_favs',JSON.stringify([...favSet]));}catch(e){}
-  buildChips(); renderList(); }
-function applyFilters(){
-  let m=matches().filter(c=>c.state!=='dead');
-  if(verifiedOnly) m=m.filter(c=>c.state==='live');
-  m.sort((a,b)=>((a.state==='live'?0:1)-(b.state==='live'?0:1))||a.name.localeCompare(b.name));
-  view=m;
-}
-function statusDot(c){const col=c.state==='live'?'#37d67a':(c.state==='dead'?'#ff4d4d':'#e6b53b');
-  return `<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${col};margin-right:5px;vertical-align:middle"></span>`;}
-function renderList(){
-  applyFilters();
-  selIdx=Math.max(0,Math.min(selIdx,Math.max(0,view.length-1)));
-  const cap=600, shown=view.slice(0,cap);
-  if(!shown.length){
-    el.channels.innerHTML=`<div style="padding:40px 16px;text-align:center;color:var(--mut)">${verifying?'<div class="spinner" style="margin:0 auto 14px"></div>Memindai siaran publik yang benar-benar bisa diputar…':'Tidak ada saluran aktif dalam filter ini. Coba ganti negara/kategori, atau matikan “Hanya terverifikasi”.'}</div>`;
-  } else {
-    el.channels.innerHTML=shown.map((c,i)=>`
-      <div class="ch ${i===selIdx?'sel':''}" data-i="${i}">
-        ${c.logo?`<img class="logo" src="${c.logo}" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'logo',textContent:'${(c.name[0]||'?').replace(/[^A-Za-z0-9]/g,'')||'?'}'}))">`
-                :`<div class="logo">${(c.name[0]||'?')}</div>`}
-        <div class="info"><div class="nm">${statusDot(c)}${c.flag} ${escapeHtml(c.name)}${c.network?` <span style="font-size:10px;color:#ffd27a;border:1px solid #5a4a25;border-radius:6px;padding:1px 5px;vertical-align:middle">${escapeHtml(c.network)}</span>`:''}${c.local?' <span style="font-size:10px;color:#39d0ff;border:1px solid #2c4763;border-radius:6px;padding:1px 5px;vertical-align:middle">Lokal</span>':''}</div><div class="sub">${escapeHtml(c.network?(c.network+(c.alt?' · '+c.alt:'')):(c.cats.slice(0,3).join(' · ')||c.countryName))}</div></div>
-        <button class="star ${favSet.has(c.id)?'on':''}" title="Favorit">${favSet.has(c.id)?'★':'☆'}</button>
-      </div>`).join('');
-  }
-  const live=matches().filter(c=>c.state==='live').length;
-  el.listhead.textContent=`Saluran — ${live} aktif${verifying?` · memindai ${scanned}/${scanTotal}…`:''}`;
-  el.meta.innerHTML=`<b>${ALL.length}</b> dalam katalog<br>${live} bisa diputar di browser${verifying?` · memindai…`:''}`;
-  [...el.channels.children].forEach(node=>{ if(node.dataset.i===undefined)return;
-    const ch=view[+node.dataset.i];
-    node.onclick=()=>{selIdx=+node.dataset.i;play(ch);highlight();};
-    const s=node.querySelector('.star'); if(s)s.onclick=e=>{e.stopPropagation();toggleFav(ch.id);};
+
+function buildChips() {
+  const cats = ['Berita', 'Olahraga', 'Film', 'Hiburan', 'Dokumenter', 'Musik', 'Anak', 'Gaya Hidup', 'Bisnis', 'Komedi', 'Cuaca']
+    .filter(cat => ALL.some(c => c.cats.includes(cat)));
+  const items = [
+    { k: 'all', l: 'Semua' },
+    { k: 'local', l: '\ud83d\udccd Lokal' },
+    { k: 'fav', l: '\u2b50 Favorit' + (favSet.size ? ' (' + favSet.size + ')' : '') },
+    ...cats.map(c => ({ k: c, l: c }))
+  ];
+  el.chips.innerHTML = items.map(it =>
+    '<button class="chip ' + (activeFilter === it.k ? 'on' : '') + '" data-k="' + it.k + '">' + it.l + '</button>'
+  ).join('');
+  [...el.chips.children].forEach(b => b.onclick = () => {
+    activeFilter = b.dataset.k; buildChips(); selIdx = 0; render();
   });
 }
-let _gen=0,_rt=null;
-function scheduleRender(){clearTimeout(_rt);_rt=setTimeout(renderList,300);}
-function hlsCheck(url){return new Promise(resolve=>{
-  let done=false; const v=document.createElement('video'); v.muted=true;
-  const finish=ok=>{ if(done)return; done=true; clearTimeout(to); try{if(h)h.destroy();}catch(e){} try{v.removeAttribute('src');v.load();}catch(e){} resolve(ok); };
-  const to=setTimeout(()=>finish(false),7000);
-  let h=null;
-  if(url.includes('.m3u8') && window.Hls && Hls.isSupported()){
-    h=new Hls({maxBufferLength:3,manifestLoadingTimeOut:6000,fragLoadingTimeOut:6000});
-    h.on(Hls.Events.FRAG_LOADED,()=>finish(true));
-    h.on(Hls.Events.ERROR,(e,d)=>{ if(d.fatal)finish(false); });
-    h.loadSource(url); h.attachMedia(v);
+
+function toggleFav(id) {
+  favSet.has(id) ? favSet.delete(id) : favSet.add(id);
+  try { localStorage.setItem('EMTE-TV_favs', JSON.stringify([...favSet])); } catch (e) { /* ok */ }
+  buildChips(); renderList();
+}
+
+function applyFilters() {
+  let m = matches().filter(c => c.state !== 'dead');
+  if (verifiedOnly) m = m.filter(c => c.state === 'live');
+  /* Urutkan: live dulu, lalu abjad */
+  m.sort((a, b) => ((a.state === 'live' ? 0 : 1) - (b.state === 'live' ? 0 : 1)) || a.name.localeCompare(b.name));
+  view = m;
+}
+
+function renderList() {
+  applyFilters();
+  selIdx = Math.max(0, Math.min(selIdx, Math.max(0, view.length - 1)));
+  const cap = 600, shown = view.slice(0, cap);
+
+  if (!shown.length) {
+    el.channels.innerHTML = '<div style="padding:40px 16px;text-align:center;color:var(--mut)">' +
+      (verifying
+        ? '<div class="spinner" style="margin:0 auto 14px"></div>Memindai siaran publik yang benar-benar bisa diputar\u2026'
+        : 'Tidak ada saluran aktif dalam filter ini.<br>Coba ganti negara/kategori, atau matikan \u201cHanya terverifikasi\u201d.') +
+      '</div>';
   } else {
-    v.src=url; v.oncanplay=()=>finish(true); v.onerror=()=>finish(false); v.load();
+    el.channels.innerHTML = shown.map((c, i) => {
+      const init = (c.name[0] || '?').replace(/[^A-Za-z0-9]/g, '') || '?';
+      const logoHtml = c.logo
+        ? '<div class="logo"><img src="' + c.logo + '" loading="lazy" onerror="this.parentElement.textContent=\'' + init + '\'"></div>'
+        : '<div class="logo">' + init + '</div>';
+      const sCls = c.state === 'live' ? 'live' : (c.state === 'dead' ? 'dead' : 'unk');
+      const tags = (c.network ? '<span class="tag net">' + esc(c.network) + '</span>' : '')
+        + (c.local ? ' <span class="tag loc">Lokal</span>' : '');
+      const subText = c.network
+        ? esc(c.network) + (c.alt ? ' \u00b7 ' + esc(c.alt) : '')
+        : esc(c.cats.slice(0, 3).join(' \u00b7 ') || c.countryName);
+      const favCls = favSet.has(c.id) ? 'on' : '';
+      const favChar = favSet.has(c.id) ? '\u2605' : '\u2606';
+      return '<div class="ch ' + (i === selIdx ? 'sel' : '') + '" data-i="' + i + '">'
+        + logoHtml
+        + '<div class="info"><div class="nm"><span class="sdot ' + sCls + '"></span>' + c.flag + ' ' + esc(c.name) + tags + '</div>'
+        + '<div class="sub">' + subText + '</div></div>'
+        + '<button class="star ' + favCls + '" title="Favorit">' + favChar + '</button></div>';
+    }).join('');
   }
-});}
-function verifyVisible(){
-  const myGen=++_gen;
-  const cands=matches().filter(c=>c.state==='unknown').slice(0,VERIFY_CAP);
-  scanTotal=cands.length; scanned=0; verifying=cands.length>0;
-  if(!verifying){renderList();return;}
+
+  const live = matches().filter(c => c.state === 'live').length;
+  el.listhead.textContent = 'Saluran \u2014 ' + live + ' aktif' + (verifying ? ' \u00b7 memindai ' + scanned + '/' + scanTotal + '\u2026' : '');
+  el.meta.innerHTML = '<b>' + ALL.length + '</b> dalam katalog<br>' + live + ' bisa diputar di browser' + (verifying ? ' \u00b7 memindai\u2026' : '');
+
+  /* Pasang event handler */
+  [...el.channels.children].forEach(node => {
+    if (node.dataset.i === undefined) return;
+    const ch = view[+node.dataset.i];
+    node.onclick = () => { selIdx = +node.dataset.i; play(ch); highlight(); };
+    const s = node.querySelector('.star');
+    if (s) s.onclick = e => { e.stopPropagation(); toggleFav(ch.id); };
+  });
+}
+
+let _gen = 0, _rt = null;
+function scheduleRender() { clearTimeout(_rt); _rt = setTimeout(renderList, 350); }
+
+/* ---- Verifikasi stream (apakah benar-benar bisa diputar) ---- */
+function hlsCheck(url) {
+  return new Promise(resolve => {
+    let done = false;
+    const v = document.createElement('video');
+    v.muted = true;
+    const finish = ok => {
+      if (done) return; done = true; clearTimeout(to);
+      try { if (h) h.destroy(); } catch (e) { /* ok */ }
+      try { v.removeAttribute('src'); v.load(); } catch (e) { /* ok */ }
+      resolve(ok);
+    };
+    const to = setTimeout(() => finish(false), 7000);
+    let h = null;
+    if (url.includes('.m3u8') && window.Hls && Hls.isSupported()) {
+      h = new Hls({ maxBufferLength: 3, manifestLoadingTimeOut: 6000, fragLoadingTimeOut: 6000 });
+      h.on(Hls.Events.FRAG_LOADED, () => finish(true));
+      h.on(Hls.Events.ERROR, (e, d) => { if (d.fatal) finish(false); });
+      h.loadSource(url); h.attachMedia(v);
+    } else {
+      v.src = url; v.oncanplay = () => finish(true); v.onerror = () => finish(false); v.load();
+    }
+  });
+}
+
+function verifyVisible() {
+  const myGen = ++_gen;
+  const cands = matches().filter(c => c.state === 'unknown').slice(0, VERIFY_CAP);
+  scanTotal = cands.length; scanned = 0; verifying = cands.length > 0;
+  if (!verifying) { renderList(); return; }
   renderList();
-  let i=0,active=0;
-  (function next(){ if(myGen!==_gen)return;
-    if(i>=cands.length && active===0){ verifying=false; scheduleRender(); return; }
-    while(active<6 && i<cands.length){ const ch=cands[i++]; active++;
-      hlsCheck(ch.url).then(ok=>{ch.state=ok?'live':'dead'; scanned++; if(ok)scheduleRender();})
-        .finally(()=>{active--; if(myGen===_gen) next();});
+  let i = 0, active = 0;
+  (function next() {
+    if (myGen !== _gen) return;
+    if (i >= cands.length && active === 0) { verifying = false; scheduleRender(); return; }
+    while (active < 6 && i < cands.length) {
+      const ch = cands[i++]; active++;
+      hlsCheck(ch.url).then(ok => { ch.state = ok ? 'live' : 'dead'; scanned++; if (ok) scheduleRender(); })
+        .finally(() => { active--; if (myGen === _gen) next(); });
     }
   })();
 }
-function render(){ renderList(); verifyVisible(); }
-function highlight(){[...el.channels.children].forEach((n,i)=>n.classList.toggle('sel',i===selIdx));
-  const cur=el.channels.children[selIdx]; if(cur)cur.scrollIntoView({block:'nearest'});}
-function escapeHtml(s){return (s||'').replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));}
 
-function play(ch){
-  if(!ch)return; current=ch;
-  try{localStorage.setItem('EMTE-TV_last',ch.id);}catch(e){}
-  el.standby.style.display='none';
-  el.overlay.style.display='flex'; el.overlay.lastChild.textContent='Mengatur '+ch.name+'…';
-  el.nowName.textContent=ch.name; el.nowSub.textContent=`${ch.flag} ${ch.countryName} · ${ch.cats.slice(0,3).join(' · ')||'Langsung'}`;
-  el.nowBadge.textContent='LANGSUNG';
-  el.chosd.textContent=ch.flag+' '+ch.name; el.chosd.style.opacity=1; clearTimeout(play._t); play._t=setTimeout(()=>el.chosd.style.opacity=0,2200);
-  if(hls){hls.destroy();hls=null;}
-  const url=ch.url;
-  const onErr=()=>{el.overlay.style.display='flex';el.overlay.lastChild.textContent='⚠ Siaran ini sedang offline — telah dihapus dari daftar. Pilih yang lain.';el.overlay.querySelector('.spinner').style.display='none';
-    if(current){current.state='dead'; scheduleRender();}};
-  const onPlay=()=>{el.overlay.style.display='none';};
-  el.overlay.querySelector('.spinner').style.display='block';
-  if(url.includes('.m3u8') && window.Hls && Hls.isSupported()){
-    hls=new Hls({maxBufferLength:20});
-    hls.loadSource(url); hls.attachMedia(video);
-    hls.on(Hls.Events.MANIFEST_PARSED,()=>video.play().then(onPlay).catch(onPlay));
-    hls.on(Hls.Events.ERROR,(e,d)=>{ if(d.fatal)onErr(); });
+function render() { renderList(); verifyVisible(); }
+
+function highlight() {
+  [...el.channels.children].forEach((n, i) => n.classList.toggle('sel', i === selIdx));
+  const cur = el.channels.children[selIdx];
+  if (cur) cur.scrollIntoView({ block: 'nearest' });
+}
+
+/* ============================================================
+   PEMUTAR — Transisi halus saat pindah saluran
+   ============================================================ */
+let skipDeadTimer = null;
+
+function play(ch) {
+  if (!ch) return;
+  current = ch;
+  clearTimeout(skipDeadTimer);
+  try { localStorage.setItem('EMTE-TV_last', ch.id); } catch (e) { /* ok */ }
+
+  el.standby.style.display = 'none';
+  el.overlay.style.display = 'flex';
+  el.overlay.querySelector('.spinner').style.display = 'block';
+  el.overlay.lastChild.textContent = 'Mengatur ' + ch.name + '\u2026';
+
+  el.nowName.textContent = ch.name;
+  el.nowSub.textContent = ch.flag + ' ' + ch.countryName + ' \u00b7 ' + (ch.cats.slice(0, 3).join(' \u00b7 ') || 'Langsung');
+  el.nowBadge.textContent = 'LANGSUNG';
+  el.nowBadge.style.borderColor = 'var(--ok)';
+  el.nowBadge.style.color = 'var(--ok)';
+
+  /* OSD nama saluran */
+  el.chosd.textContent = ch.flag + ' ' + ch.name;
+  el.chosd.style.opacity = '1';
+  clearTimeout(play._t);
+  play._t = setTimeout(() => el.chosd.style.opacity = '0', 2200);
+
+  /* Transisi fade */
+  video.classList.add('fading');
+
+  /* Bersihkan HLS sebelumnya */
+  if (hls) { hls.destroy(); hls = null; }
+
+  const url = ch.url;
+
+  const onErr = () => {
+    video.classList.remove('fading');
+    el.overlay.style.display = 'flex';
+    el.overlay.querySelector('.spinner').style.display = 'none';
+    el.overlay.lastChild.textContent = '\u26a0 Siaran ini sedang offline. Mencoba saluran berikutnya\u2026';
+    el.nowBadge.textContent = 'OFFLINE';
+    el.nowBadge.style.borderColor = 'var(--red)';
+    el.nowBadge.style.color = 'var(--red)';
+    if (current) { current.state = 'dead'; scheduleRender(); }
+    /* Otomatis skip ke saluran berikutnya setelah 2 detik */
+    clearTimeout(skipDeadTimer);
+    skipDeadTimer = setTimeout(() => { if (view.length > 1) R.chan(1); }, 2000);
+  };
+
+  const onPlay = () => {
+    video.classList.remove('fading');
+    el.overlay.style.display = 'none';
+    el.nowBadge.textContent = 'LANGSUNG';
+    el.nowBadge.style.borderColor = 'var(--ok)';
+    el.nowBadge.style.color = 'var(--ok)';
+    /* Deteksi resolusi setelah metadata tersedia */
+    detectQuality();
+  };
+
+  if (url.includes('.m3u8') && window.Hls && Hls.isSupported()) {
+    hls = new Hls({ maxBufferLength: 20 });
+    hls.loadSource(url);
+    hls.attachMedia(video);
+    hls.on(Hls.Events.MANIFEST_PARSED, () => {
+      video.play().then(onPlay).catch(onPlay);
+    });
+    hls.on(Hls.Events.ERROR, (e, d) => { if (d.fatal) onErr(); });
   } else {
-    video.src=url; video.play().then(onPlay).catch(onErr); video.onerror=onErr;
+    video.src = url;
+    video.play().then(onPlay).catch(onPlay);
+    video.onerror = onErr;
   }
 }
 
-// ---- remote / keyboard ----
-const R={
-  power(){ if(el.standby.style.display==='flex'){el.standby.style.display='none'; if(current)play(current);}
-           else{ if(hls){hls.destroy();hls=null;} video.pause(); video.removeAttribute('src'); video.load(); el.standby.style.display='flex'; el.overlay.style.display='none'; } },
-  nav(d){ selIdx=Math.max(0,Math.min(view.length-1,selIdx+d)); highlight(); },
-  side(d){ selIdx=Math.max(0,Math.min(view.length-1,selIdx+d*10)); highlight(); },
-  ok(){ if(view[selIdx])play(view[selIdx]); },
-  vol(d){ video.muted=false; video.volume=Math.max(0,Math.min(1,+(video.volume+d).toFixed(2))); flashNum('VOL '+Math.round(video.volume*100)); },
-  chan(d){ if(!view.length)return; selIdx=(selIdx+d+view.length)%view.length; highlight(); play(view[selIdx]); },
-  mute(){ video.muted=!video.muted; flashNum(video.muted?'BISU':'SUARA'); },
-  guide(){ const l=document.querySelector('.list'); l.style.display=l.style.display==='none'?'flex':'none'; },
-  num(n){ numBuf+=n; el.numosd.textContent=numBuf; el.numosd.style.opacity=1; clearTimeout(numTimer);
-          numTimer=setTimeout(()=>{ const i=parseInt(numBuf,10)-1; numBuf=''; el.numosd.style.opacity=0;
-            if(i>=0&&i<view.length){selIdx=i;highlight();play(view[i]);} },1100); },
-  back(){ el.q.value='';render(); },
-  home(){ el.q.value=''; render(); },
-  full(){ const s=document.querySelector('.screen'); if(!document.fullscreenElement)s.requestFullscreen?.(); else document.exitFullscreen?.(); },
-  playpause(){ if(video.paused){video.play().catch(()=>{});} else video.pause(); },
-  async pip(){
-    try{ if(document.pictureInPictureElement) await document.exitPictureInPicture();
-         else if(video.requestPictureInPicture) await video.requestPictureInPicture();
-         else flashNum('Fitur mengambang tidak didukung'); }catch(e){ flashNum('Tidak tersedia'); } },
-  screen2(){
-    if(!current){flashNum('Pilih saluran dulu');return;}
-    const ch=current;
-    const html='<!doctype html><html><head><meta charset=utf-8><title>'+escapeHtml(ch.name)+' — Layar 2</title>'
-      +'<script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.13/dist/hls.min.js"><\/script>'
-      +'<style>html,body{margin:0;height:100%;background:#000;overflow:hidden}video{width:100vw;height:100vh;object-fit:contain}'
-      +'.b{position:fixed;top:10px;right:10px;z-index:9;background:rgba(0,0,0,.55);color:#fff;border:1px solid #555;border-radius:10px;padding:9px 14px;font:14px sans-serif;cursor:pointer}'
-      +'.t{position:fixed;top:10px;left:12px;color:#fff;font:600 15px sans-serif;text-shadow:0 1px 4px #000;opacity:.85}</style></head>'
-      +'<body><video id=v playsinline x-webkit-airplay="allow" controls></video>'
-      +'<div class=t>'+escapeHtml(ch.flag+" "+ch.name)+'</div>'
-      +'<button class=b onclick="var e=document.documentElement;e.requestFullscreen&&e.requestFullscreen()">⛶ Layar Penuh</button>'
-      +'<script>var u='+JSON.stringify(ch.url)+';var v=document.getElementById("v");'
-      +'if(u.indexOf(".m3u8")>-1&&window.Hls&&Hls.isSupported()){var h=new Hls();h.loadSource(u);h.attachMedia(v);h.on(Hls.Events.MANIFEST_PARSED,function(){v.play()});}'
-      +'else{v.src=u;v.play();}<\/script></body></html>';
-    const w=window.open('','EMTE-TV_s2_'+Date.now(),'width=960,height=560');
-    if(!w){flashNum('Izinkan pop-up untuk layar kedua');return;}
-    w.document.open(); w.document.write(html); w.document.close();
-    flashNum('Membuka "'+ch.name+'" di jendela baru');
+/* Deteksi kualitas resolusi */
+function detectQuality() {
+  const check = () => {
+    const w = video.videoWidth, h = video.videoHeight;
+    if (w && h) {
+      let label = w + 'x' + h;
+      if (h >= 1080) label = 'HD 1080p';
+      else if (h >= 720) label = 'HD 720p';
+      else if (h >= 480) label = 'SD 480p';
+      else label = 'SD ' + label;
+      el.nowSub.textContent += ' \u00b7 ' + label;
+    }
+  };
+  if (video.readyState >= 1) check();
+  else video.addEventListener('loadedmetadata', check, { once: true });
+}
+
+/* ============================================================
+   REMOTE & KEYBOARD
+   ============================================================ */
+const R = {
+  power() {
+    if (el.standby.style.display === 'flex') {
+      el.standby.style.display = 'none';
+      if (current) play(current);
+    } else {
+      clearTimeout(skipDeadTimer);
+      if (hls) { hls.destroy(); hls = null; }
+      video.pause(); video.removeAttribute('src'); video.load();
+      el.standby.style.display = 'flex';
+      el.overlay.style.display = 'none';
+      current = null;
+    }
   },
-  async cast(){
-    try{
-      if(video.remote && typeof video.remote.prompt==='function'){ await video.remote.prompt(); return; }
-    }catch(e){}
-    if(typeof video.webkitShowPlaybackTargetPicker==='function'){ video.webkitShowPlaybackTargetPicker(); return; }
-    if(video.requestPictureInPicture){ this.pip(); flashNum('Tidak ada perangkat siaran — dibuka mengambang'); return; }
-    flashNum('Siaran tidak didukung di sini');
+  nav(d) { selIdx = Math.max(0, Math.min(view.length - 1, selIdx + d)); highlight(); },
+  side(d) { selIdx = Math.max(0, Math.min(view.length - 1, selIdx + d * 10)); highlight(); },
+  ok() { if (view[selIdx]) play(view[selIdx]); },
+  vol(d) {
+    video.muted = false;
+    video.volume = Math.max(0, Math.min(1, +(video.volume + d).toFixed(2)));
+    showVol();
+  },
+  chan(d) {
+    if (!view.length) return;
+    selIdx = (selIdx + d + view.length) % view.length;
+    highlight(); play(view[selIdx]);
+  },
+  mute() { video.muted = !video.muted; showVol(); toast(video.muted ? 'Bisukan' : 'Suarakan'); },
+  guide() {
+    const l = document.querySelector('.list');
+    l.style.display = l.style.display === 'none' ? 'flex' : 'none';
+  },
+  num(n) {
+    numBuf += n;
+    el.numosd.textContent = numBuf;
+    el.numosd.style.opacity = '1';
+    clearTimeout(numTimer);
+    numTimer = setTimeout(() => {
+      const i = parseInt(numBuf, 10) - 1;
+      numBuf = '';
+      el.numosd.style.opacity = '0';
+      if (i >= 0 && i < view.length) { selIdx = i; highlight(); play(view[i]); }
+      else toast('Nomor saluran tidak valid');
+    }, 1100);
+  },
+  back() { el.q.value = ''; render(); },
+  home() { el.q.value = ''; render(); },
+  full() {
+    const s = el.screen;
+    if (!document.fullscreenElement) s.requestFullscreen?.();
+    else document.exitFullscreen?.();
+  },
+  playpause() {
+    if (video.paused) { video.play().catch(() => { }); toast('Memutar'); }
+    else { video.pause(); toast('Jeda'); }
+  },
+  async pip() {
+    try {
+      if (document.pictureInPictureElement) await document.exitPictureInPicture();
+      else if (video.requestPictureInPicture) await video.requestPictureInPicture();
+      else toast('Fitur mengambang tidak didukung di browser ini');
+    } catch (e) { toast('Tidak dapat membuka jendela mengambang'); }
+  },
+  screen2() {
+    if (!current) { toast('Pilih saluran dulu'); return; }
+    const ch = current;
+    const html = '<!doctype html><html><head><meta charset=utf-8><title>' + esc(ch.name) + ' \u2014 Layar 2</title>'
+      + '<script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.13/dist/hls.min.js"><\/script>'
+      + '<style>*{margin:0;box-sizing:border-box}html,body{height:100%;background:#000;overflow:hidden}'
+      + 'video{width:100vw;height:100vh;object-fit:contain}'
+      + '.b{position:fixed;top:10px;right:10px;z-index:9;background:rgba(0,0,0,.6);color:#ccc;border:1px solid #444;border-radius:10px;padding:8px 14px;font:14px sans-serif;cursor:pointer;transition:border-color .2s}'
+      + '.b:hover{border-color:#1a73ff;color:#fff}'
+      + '.t{position:fixed;top:12px;left:14px;color:#fff;font:600 15px sans-serif;text-shadow:0 1px 6px #000;opacity:.85}'
+      + '.err{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;color:#555;font:15px sans-serif;display:none}</style></head>'
+      + '<body><video id=v playsinline x-webkit-airplay="allow" controls></video>'
+      + '<div class=t>' + esc(ch.flag + ' ' + ch.name) + '</div>'
+      + '<button class=b onclick="var e=document.documentElement;e.requestFullscreen&&e.requestFullscreen()">\u26f6 Layar Penuh</button>'
+      + '<div class=err id=err>\u26a0 Siaran offline</div>'
+      + '<script>var u=' + JSON.stringify(ch.url) + ',v=document.getElementById("v"),err=document.getElementById("err");'
+      + 'function fail(){err.style.display="flex";v.style.display="none"}'
+      + 'if(u.indexOf(".m3u8")>-1&&window.Hls&&Hls.isSupported()){'
+      + 'var h=new Hls();h.loadSource(u);h.attachMedia(v);'
+      + 'h.on(Hls.Events.MANIFEST_PARSED,function(){v.play().catch(function(){})});'
+      + 'h.on(Hls.Events.ERROR,function(e,d){if(d.fatal)fail()});}'
+      + 'else{v.src=u;v.play().catch(function(){});v.onerror=fail;}<\/script></body></html>';
+    const w = window.open('', 'EMTE-TV_s2_' + Date.now(), 'width=960,height=560');
+    if (!w) { toast('Izinkan pop-up untuk membuka layar kedua'); return; }
+    w.document.open(); w.document.write(html); w.document.close();
+    toast('Membuka "' + ch.name + '" di jendela baru');
+  },
+  async cast() {
+    try {
+      if (video.remote && typeof video.remote.prompt === 'function') { await video.remote.prompt(); return; }
+    } catch (e) { /* ok */ }
+    if (typeof video.webkitShowPlaybackTargetPicker === 'function') { video.webkitShowPlaybackTargetPicker(); return; }
+    if (video.requestPictureInPicture) { this.pip(); toast('Tidak ada perangkat siaran \u2014 dibuka mengambang'); return; }
+    toast('Fitur siaran tidak didukung di browser ini');
+  },
+  help() {
+    el.helpBg.classList.toggle('show');
   }
 };
-video.addEventListener('play',()=>{const b=document.getElementById('ppBtn'); if(b)b.textContent='⏸ Jeda';});
-video.addEventListener('pause',()=>{const b=document.getElementById('ppBtn'); if(b)b.textContent='▶ Putar';});
-function flashNum(t){el.numosd.textContent=t;el.numosd.style.opacity=1;clearTimeout(numTimer);numTimer=setTimeout(()=>el.numosd.style.opacity=0,900);}
 
-el.q.addEventListener('input',()=>{selIdx=0;render();});
-el.vonly.addEventListener('change',()=>{verifiedOnly=el.vonly.checked;selIdx=0;render();});
-addEventListener('keydown',e=>{
-  if(e.target.tagName==='INPUT')return;
-  const k=e.key;
-  if(k==='ArrowUp'){R.nav(-1);e.preventDefault();}
-  else if(k==='ArrowDown'){R.nav(1);e.preventDefault();}
-  else if(k==='ArrowLeft')R.side(-1);
-  else if(k==='ArrowRight')R.side(1);
-  else if(k==='Enter')R.ok();
-  else if(k==='+'||k==='=')R.vol(.1);
-  else if(k==='-')R.vol(-.1);
-  else if(k.toLowerCase()==='m')R.mute();
-  else if(k===' '||k.toLowerCase()==='k'){R.playpause();e.preventDefault();}
-  else if(k.toLowerCase()==='c')R.cast();
-  else if(k.toLowerCase()==='p')R.pip();
-  else if(k.toLowerCase()==='f')R.full();
-  else if(k==='PageUp')R.chan(-1);
-  else if(k==='PageDown')R.chan(1);
-  else if(/[0-9]/.test(k))R.num(+k);
+/* Update tombol play/pause */
+video.addEventListener('play', () => {
+  const b = document.getElementById('ppBtn');
+  if (b) b.innerHTML = '&#9208; Jeda';
 });
+video.addEventListener('pause', () => {
+  const b = document.getElementById('ppBtn');
+  if (b) b.innerHTML = '&#9654; Putar';
+});
+
+/* ============================================================
+   KEYBOARD SHORTCUTS
+   ============================================================ */
+addEventListener('keydown', e => {
+  /* Jangan intercept saat di input */
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+  const k = e.key;
+
+  /* Tutup help dengan Escape */
+  if (k === 'Escape') {
+    if (el.helpBg.classList.contains('show')) { R.help(); e.preventDefault(); return; }
+    if (document.fullscreenElement) { document.exitFullscreen(); return; }
+    return;
+  }
+
+  if (k === 'ArrowUp') { R.nav(-1); e.preventDefault(); }
+  else if (k === 'ArrowDown') { R.nav(1); e.preventDefault(); }
+  else if (k === 'ArrowLeft') { R.side(-1); e.preventDefault(); }
+  else if (k === 'ArrowRight') { R.side(1); e.preventDefault(); }
+  else if (k === 'Enter') { R.ok(); }
+  else if (k === '+' || k === '=') { R.vol(.1); e.preventDefault(); }
+  else if (k === '-') { R.vol(-.1); e.preventDefault(); }
+  else if (k.toLowerCase() === 'm') { R.mute(); }
+  else if (k === ' ' || k.toLowerCase() === 'k') { R.playpause(); e.preventDefault(); }
+  else if (k.toLowerCase() === 'c') { R.cast(); }
+  else if (k.toLowerCase() === 'p') { R.pip(); }
+  else if (k.toLowerCase() === 'f') { R.full(); }
+  else if (k === 'PageUp') { R.chan(-1); e.preventDefault(); }
+  else if (k === 'PageDown') { R.chan(1); e.preventDefault(); }
+  else if (/[0-9]/.test(k)) { R.num(+k); }
+  else if (k === '?' || (k === '/' && e.shiftKey)) { R.help(); e.preventDefault(); }
+});
+
+/* Pencarian dengan debounce */
+let qTimer = null;
+el.q.addEventListener('input', () => { clearTimeout(qTimer); qTimer = setTimeout(() => { selIdx = 0; render(); }, 250); });
+
+/* Toggle "hanya terverifikasi" */
+el.vonly.addEventListener('change', () => { verifiedOnly = el.vonly.checked; selIdx = 0; render(); });
+
+/* ============================================================
+   INISIALISASI
+   ============================================================ */
 boot();
 </script>
 </body>
